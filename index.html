@@ -1049,8 +1049,9 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
       <div class="card span"><h2>The seasons</h2><div class="sub">League finish, record and the headline team numbers for each season.</div><div class="tw"><table id="yoy-team"></table></div></div>
       <div class="card"><h2>Batting by phase</h2><div class="sub">RoyalsPunters run rate in the powerplay (1–6), middle (7–17) and death (18–25), each season.</div><div class="legend" id="yoy-leg1"></div><div class="chart" id="yoy-batphase"></div></div>
       <div class="card"><h2>Bowling by phase</h2><div class="sub">Economy conceded in each phase, each season.</div><div class="legend" id="yoy-leg2"></div><div class="chart" id="yoy-bowlphase"></div></div>
-      <div class="card span"><h2>Players in both seasons — batting</h2><div class="sub">Season totals for everyone who batted in more than one season, with the change.</div><div class="tw"><table id="yoy-bat"></table></div></div>
-      <div class="card span"><h2>Players in both seasons — bowling</h2><div class="sub">Season totals for everyone who bowled in more than one season.</div><div class="tw"><table id="yoy-bowl"></table></div></div>
+      <div class="card span"><h2>Players across the seasons — batting</h2><div class="sub">Everyone who batted in more than one season, every season side by side. Each season cell is runs with strike rate dimmed beside it; a dash means the player did not play that season. First → last compares their first and last season, not fixed years.</div><div class="tw"><table id="yoy-bat"></table></div></div>
+      <div class="card span"><h2>Players across the seasons — bowling</h2><div class="sub">Everyone who bowled in more than one season. Each season cell is wickets with economy dimmed beside it; a dash means the player did not bowl that season.</div><div class="tw"><table id="yoy-bowl"></table></div></div>
+      <div class="card span"><h2>Squad churn</h2><div class="sub" id="yoy-churn-sub"></div><div class="tw"><table id="yoy-churn"></table></div></div>
       <div class="card span"><h2>Opponents across the seasons</h2><div class="sub">Our record against each team we have met more than once, season by season.</div><div class="tw"><table id="yoy-opp"></table></div></div>
     </div>
   </section>
@@ -1129,6 +1130,7 @@ function tipFor(host){
 }
 function svgEl(host,W,H){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox',`0 0 ${W} ${H}`);host.appendChild(s);return s;}
 function el(parent,tag,attrs,text){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;parent.appendChild(e);return e;}
+const ovBalls=o=>o==null?0:Math.floor(o)*6+Math.round((o-Math.floor(o))*10);
 function niceTicks(max,n=4){const raw=max/n,p=Math.pow(10,Math.floor(Math.log10(raw)));const c=[1,2,2.5,5,10].map(x=>x*p).find(x=>x>=raw);const out=[];for(let v=0;v<=max+1e-9;v+=c)out.push(+v.toFixed(6));if(out[out.length-1]<max)out.push(out[out.length-1]+c);return out;}
 function bind(host,hit,html){const t=tipFor(host);hit.addEventListener('mousemove',e=>{const r=host.getBoundingClientRect();t.show(html,e.clientX-r.left,e.clientY-r.top);});hit.addEventListener('mouseleave',t.hide);hit.addEventListener('focus',()=>{const r=hit.getBoundingClientRect(),h=host.getBoundingClientRect();t.show(html,r.left-h.left+r.width/2,r.top-h.top);});hit.addEventListener('blur',t.hide);hit.setAttribute('tabindex','0');}
 
@@ -2592,15 +2594,47 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
   grouped($('#yoy-batphase'),'ph',12);grouped($('#yoy-bowlphase'),'phW',12);
   // players in both seasons
   const yr={};Y.forEach(y=>{const d=SEASONS[y];const BAT=unpack(d.bat);d.batting.forEach(b=>{const bb=d.bat.filter(r=>r[4]===b.p);const balls=bb.filter(r=>r[6]!=='wd').length;(yr[b.p]=yr[b.p]||{}).bat=yr[b.p].bat||{};yr[b.p].bat[y]={m:b.m,inn:b.inn,runs:b.runs,avg:b.avg,sr:balls?100*b.runs/balls:b.sr,f:b.f,s:b.s,hs:b.hs??Math.max(0,...d.innings.filter(i=>i.p===b.p).map(i=>i.runs))};});
-    d.bowling.forEach(b=>{(yr[b.p]=yr[b.p]||{}).bowl=yr[b.p].bowl||{};yr[b.p].bowl[y]={m:b.m,overs:b.overs,w:b.w,eco:b.eco,avg:b.avg,dot:b.dotpct};});
+    d.bowling.forEach(b=>{(yr[b.p]=yr[b.p]||{}).bowl=yr[b.p].bowl||{};yr[b.p].bowl[y]={m:b.m,overs:b.overs,w:b.w,eco:b.eco,avg:b.avg,dot:b.dotpct,runs:b.runs,balls:ovBalls(b.overs)};});
     d.ratings.forEach((r,i)=>{(yr[r.p]=yr[r.p]||{}).rank=yr[r.p].rank||{};yr[r.p].rank[y]={rank:i+1,total:r.total};});});
   const both=k=>Object.entries(yr).filter(([,v])=>v[k]&&Object.keys(v[k]).length>1);
   const d=(a,b,dec=0,inv=false)=>{if(a==null||b==null)return '';const v=b-a;const good=inv?v<0:v>0;return `<span style="color:${v===0?'var(--muted)':good?'var(--win)':'var(--loss)'};font-weight:600">${v>0?'+':''}${v.toFixed(dec)}</span>`;};
-  const y0=Y[0],y1=Y[Y.length-1];
-  {const rows=both('bat').map(([p,v])=>({p,a:v.bat[y0],b:v.bat[y1],ra:v.rank?.[y0]?.rank,rb:v.rank?.[y1]?.rank})).filter(r=>r.a&&r.b).sort((x,y)=>(y.b.runs+y.a.runs)-(x.b.runs+x.a.runs));
-    $('#yoy-bat').innerHTML=`<thead><tr><th>Player</th><th class="r">Inn ${y0}</th><th class="r">Runs ${y0}</th><th class="r">Avg</th><th class="r">SR</th><th class="r">HS</th><th class="r">Inn ${y1}</th><th class="r">Runs ${y1}</th><th class="r">Avg</th><th class="r">SR</th><th class="r">HS</th><th class="r">Runs Δ</th><th class="r">SR Δ</th><th class="r">Rating rank</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td><td class="r">${r.a.inn}</td><td class="r"><b>${r.a.runs}</b></td><td class="r">${r.a.avg??'—'}</td><td class="r">${r.a.sr?r.a.sr.toFixed(0):'—'}</td><td class="r">${r.a.hs??'—'}</td><td class="r">${r.b.inn}</td><td class="r"><b>${r.b.runs}</b></td><td class="r">${r.b.avg??'—'}</td><td class="r">${r.b.sr?r.b.sr.toFixed(0):'—'}</td><td class="r">${r.b.hs??'—'}</td><td class="r">${d(r.a.runs,r.b.runs)}</td><td class="r">${d(r.a.sr,r.b.sr)}</td><td class="r">${r.ra??'—'} → ${r.rb??'—'}</td></tr>`).join('')}</tbody>`;}
-  {const rows=both('bowl').map(([p,v])=>({p,a:v.bowl[y0],b:v.bowl[y1]})).filter(r=>r.a&&r.b).sort((x,y)=>(y.b.w+y.a.w)-(x.b.w+x.a.w));
-    $('#yoy-bowl').innerHTML=`<thead><tr><th>Player</th><th class="r">Overs ${y0}</th><th class="r">Wkts ${y0}</th><th class="r">Econ</th><th class="r">Dot %</th><th class="r">Overs ${y1}</th><th class="r">Wkts ${y1}</th><th class="r">Econ</th><th class="r">Dot %</th><th class="r">Wkts Δ</th><th class="r">Econ Δ</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td><td class="r">${r.a.overs}</td><td class="r"><b>${r.a.w}</b></td><td class="r">${r.a.eco.toFixed(2)}</td><td class="r">${r.a.dot.toFixed(0)}%</td><td class="r">${r.b.overs}</td><td class="r"><b>${r.b.w}</b></td><td class="r">${r.b.eco.toFixed(2)}</td><td class="r">${r.b.dot.toFixed(0)}%</td><td class="r">${d(r.a.w,r.b.w)}</td><td class="r">${d(r.a.eco,r.b.eco,2,true)}</td></tr>`).join('')}</tbody>`;}
+  const mut=t=>`<span style="color:var(--muted)">${t}</span>`, dash=mut('—');
+  const yhead=Y.map(y=>`<th class="r">${y}</th>`).join('');
+  /* one row per player, one column per season: a player absent in a season gets a dash,
+     which is the point - the squad has turned over every year. */
+  {const rows=both('bat').map(([p,v])=>{
+      const per=Y.map(y=>v.bat[y]||null), seen=per.filter(Boolean);
+      const runs=seen.reduce((a,x)=>a+x.runs,0), inn=seen.reduce((a,x)=>a+x.inn,0);
+      const balls=seen.reduce((a,x)=>a+(x.sr?100*x.runs/x.sr:0),0);
+      const ys=Y.filter(y=>v.bat[y]);
+      return {p,per,n:seen.length,runs,inn,sr:balls?100*runs/balls:null,
+              hs:Math.max(0,...seen.map(x=>+x.hs||0)),
+              f:v.bat[ys[0]],l:v.bat[ys[ys.length-1]],fy:ys[0],ly:ys[ys.length-1]};
+    }).sort((a,b)=>b.runs-a.runs);
+    const cell=x=>x?`<b>${x.runs}</b> ${mut(x.sr?x.sr.toFixed(0):'—')}`:dash;
+    $('#yoy-bat').innerHTML=`<thead><tr><th>Player</th>${yhead}<th class="r">Seasons</th><th class="r">Inn</th><th class="r">Runs</th><th class="r">SR</th><th class="r">HS</th><th class="r">First → last</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td>${r.per.map(x=>`<td class="r">${cell(x)}</td>`).join('')}<td class="r">${r.n}</td><td class="r">${r.inn}</td><td class="r"><b>${r.runs}</b></td><td class="r">${r.sr?r.sr.toFixed(0):'—'}</td><td class="r">${r.hs||'—'}</td><td class="r">${d(r.f.runs,r.l.runs)} ${mut(r.fy+'→'+r.ly)}</td></tr>`).join('')}</tbody>`;}
+
+  {const rows=both('bowl').map(([p,v])=>{
+      const per=Y.map(y=>v.bowl[y]||null), seen=per.filter(Boolean);
+      const w=seen.reduce((a,x)=>a+x.w,0), runs=seen.reduce((a,x)=>a+(x.runs||0),0);
+      const balls=seen.reduce((a,x)=>a+(x.balls||0),0);
+      const ys=Y.filter(y=>v.bowl[y]);
+      return {p,per,n:seen.length,w,balls,eco:balls?runs/(balls/6):null,
+              f:v.bowl[ys[0]],l:v.bowl[ys[ys.length-1]],fy:ys[0],ly:ys[ys.length-1]};
+    }).sort((a,b)=>b.w-a.w);
+    const cell=x=>x?`<b>${x.w}</b> ${mut(x.eco.toFixed(2))}`:dash;
+    $('#yoy-bowl').innerHTML=`<thead><tr><th>Player</th>${yhead}<th class="r">Seasons</th><th class="r">Overs</th><th class="r">Wkts</th><th class="r">Econ</th><th class="r">First → last</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td>${r.per.map(x=>`<td class="r">${cell(x)}</td>`).join('')}<td class="r">${r.n}</td><td class="r">${Math.floor(r.balls/6)}${r.balls%6?'.'+(r.balls%6):''}</td><td class="r"><b>${r.w}</b></td><td class="r">${r.eco?r.eco.toFixed(2):'—'}</td><td class="r">${d(r.f.w,r.l.w)} ${mut(r.fy+'→'+r.ly)}</td></tr>`).join('')}</tbody>`;}
+
+  /* squad churn: how many played each season, how many were new, how many did not return */
+  {const sq={};Y.forEach(y=>{const d=SEASONS[y];sq[y]=new Set([...d.batting.map(b=>b.p),...d.bowling.map(b=>b.p)]);});
+   const churn=Y.map((y,k)=>{const cur=sq[y],prev=k?sq[Y[k-1]]:null;
+     const nw=prev?[...cur].filter(x=>!prev.has(x)):null;
+     const gone=prev?[...prev].filter(x=>!cur.has(x)):[];
+     return {y,n:cur.size,nw,gone,kept:prev?[...cur].filter(x=>prev.has(x)).length:null};});
+   const ever=new Set(Y.flatMap(y=>[...sq[y]])), core=[...ever].filter(x=>Y.every(y=>sq[y].has(x)));
+   $('#yoy-churn').innerHTML=`<thead><tr><th>Season</th><th class="r">Played</th><th class="r">Retained</th><th class="r">New</th><th class="r">Did not return</th><th>Who came in</th><th>Who dropped out</th></tr></thead><tbody>${churn.map(c=>`<tr><td><b>${c.y}</b></td><td class="r">${c.n}</td><td class="r">${c.kept??'—'}</td><td class="r">${c.nw?`<span style="color:var(--win);font-weight:600">${c.nw.length}</span>`:dash}</td><td class="r"><span style="color:var(--loss);font-weight:600">${c.gone.length||'—'}</span></td><td style="font-size:11.5px">${c.nw?(c.nw.length?c.nw.map(esc).join(', '):dash):mut('first season on record')}</td><td style="font-size:11.5px">${c.gone.length?c.gone.map(esc).join(', '):dash}</td></tr>`).join('')}</tbody>`;
+   $('#yoy-churn-sub').textContent=`${ever.size} players have turned out across the ${Y.length} seasons; only ${core.length} played in all ${Y.length} (${core.sort().join(', ')||'none'}). ${Y[0]} is the baseline, so it has no intake or departures of its own.`;}
+
   {const opps={};Y.forEach(y=>SEASONS[y].matches.forEach(m=>{const o=opps[m.opp]=opps[m.opp]||{};const s=o[y]=o[y]||{w:0,l:0,nr:0,ms:[]};s[m.result==='Won'?'w':m.result==='Lost'?'l':'nr']++;s.ms.push(m);}));
     const rows=Object.entries(opps).filter(([,v])=>Object.keys(v).length>1||Object.values(v).some(s=>s.w+s.l+s.nr>1)).map(([o,v])=>({o,v,tot:Y.reduce((a,y)=>a+(v[y]?v[y].w+v[y].l:0),0)})).sort((a,b)=>b.tot-a.tot);
     const wl=s=>s?`<span style="color:var(--win);font-weight:600">${s.w}</span>–<span style="color:var(--loss);font-weight:600">${s.l}</span>${s.nr?` <span style="color:var(--muted)">(${s.nr} NR)</span>`:''} <span style="color:var(--muted);font-size:11px">${s.ms.filter(m=>m.rp).map(m=>(m.result==='Won'?'W ':'L ')+m.rp+' v '+m.opp_score).join(' · ')}</span>`:'<span style="color:var(--muted)">—</span>';
