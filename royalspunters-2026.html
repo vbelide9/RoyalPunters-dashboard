@@ -415,6 +415,7 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
       <button class="tab" role="tab" data-p="intel">Intelligence</button>
       <button class="tab" role="tab" data-p="player">Player Profile</button>
       <button class="tab" role="tab" data-p="yoy">Year on year</button>
+      <button class="tab" role="tab" data-p="alltime">All-time</button>
     </div>
     <div class="season-pick"><label for="season-select">Season</label><select id="season-select" aria-label="Season"></select></div>
   </div>
@@ -1054,6 +1055,30 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
       <div class="card span"><h2>Players across the seasons — bowling</h2><div class="sub" id="yoy-bowl-sub">Every player who has bowled for RoyalsPunters in any season, including this year's newcomers. Under each year: <b>wickets</b> in bold, that season's <span style="color:var(--muted)">economy</span> dimmed beside it. A dash means no overs that season. Overs, Wkts and Econ on the right are career figures across the seasons played.</div><div class="tw"><table id="yoy-bowl"></table></div></div>
       <div class="card span"><h2>Squad churn</h2><div class="sub" id="yoy-churn-sub"></div><div class="tw"><table id="yoy-churn"></table></div></div>
       <div class="card span"><h2>Opponents across the seasons</h2><div class="sub">Our record against each team we have met more than once, season by season.</div><div class="tw"><table id="yoy-opp"></table></div></div>
+    </div>
+  </section>
+  <section class="panel" id="p-alltime" role="tabpanel" hidden>
+    <div class="tabdesc">Four seasons pooled — 66 matches and 17,161 deliveries. Career records, what the grounds and the toss are actually worth, who the opposition's dangerous players are, and which numbers really separate a win from a loss.</div>
+    <div class="tiles" id="at-tiles"></div>
+    <div class="grid g2">
+      <div class="card span"><h2>Career batting</h2><div class="sub">Every player who has batted, all seasons pooled. Strike rate is computed from balls faced in the ball-by-ball, not averaged across seasons.</div><div class="tw"><table id="at-bat"></table></div></div>
+      <div class="card span"><h2>Career bowling</h2><div class="sub">Overs, economy and average across every season. Economy is total runs over total overs, correctly weighted.</div><div class="tw"><table id="at-bowl"></table></div></div>
+      <div class="card"><h2>Career fielding</h2><div class="sub">Catches, keeping dismissals and run-outs, all seasons.</div><div class="tw"><table id="at-field"></table></div></div>
+      <div class="card"><h2>Player of the match</h2><div class="sub">Awards to RoyalsPunters players across the four seasons.</div><div class="tw"><table id="at-potm"></table></div></div>
+      <div class="card"><h2>Best innings ever</h2><div class="sub">Top ten individual scores.</div><div class="tw"><table id="at-bi"></table></div></div>
+      <div class="card"><h2>Best spell ever</h2><div class="sub">Top ten bowling returns.</div><div class="tw"><table id="at-bs"></table></div></div>
+      <div class="card span"><h2>Best partnerships ever</h2><div class="sub">Top ten stands.</div><div class="tw"><table id="at-bp"></table></div></div>
+      <div class="card span"><h2>Grounds — what each one is worth</h2><div class="sub" id="at-ground-sub"></div><div class="tw"><table id="at-ground"></table></div></div>
+      <div class="card span"><h2>The toss, four seasons pooled</h2><div class="sub" id="at-toss-sub"></div><div class="tw"><table id="at-toss"></table></div></div>
+      <div class="card span"><h2>What actually separates a win from a loss</h2><div class="sub" id="at-drv-sub"></div><div class="tw"><table id="at-drv"></table></div></div>
+      <div class="card span"><h2>Opposition — the clubs</h2><div class="sub">Every opponent met, all-time record and how it splits by ground.</div><div class="tw"><table id="at-opp"></table></div></div>
+      <div class="card"><h2>Opposition batters who hurt us most</h2><div class="sub">Runs scored against RoyalsPunters across the four seasons, from the ball-by-ball.</div><div class="tw"><table id="at-oppbat"></table></div></div>
+      <div class="card"><h2>Opposition bowlers we have not solved</h2><div class="sub">Wickets taken against RoyalsPunters, with what they cost.</div><div class="tw"><table id="at-oppbowl"></table></div></div>
+      <div class="card span"><h2>Career arcs — peak, decline, trajectory</h2><div class="sub" id="at-arc-sub"></div><div class="tw"><table id="at-arc"></table></div></div>
+      <div class="card span"><h2>Partnership pairs</h2><div class="sub">Combinations with three or more stands together, all seasons.</div><div class="tw"><table id="at-pairs"></table></div></div>
+      <div class="card span"><h2>Squad construction and retention</h2><div class="sub" id="at-build-sub"></div><div class="tw"><table id="at-build"></table></div></div>
+      <div class="card span"><h2>Phase evolution</h2><div class="sub">Run rate scored and economy conceded in each phase, season by season, batting and bowling side by side.</div><div class="tw"><table id="at-phase"></table></div></div>
+      <div class="card span"><h2>Milestones in sight</h2><div class="sub" id="at-miles-sub"></div><div class="tw"><table id="at-miles"></table></div></div>
     </div>
   </section>
 </main>
@@ -2649,6 +2674,272 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     const rows=Object.entries(opps).filter(([,v])=>Object.keys(v).length>1||Object.values(v).some(s=>s.w+s.l+s.nr>1)).map(([o,v])=>({o,v,tot:Y.reduce((a,y)=>a+(v[y]?v[y].w+v[y].l:0),0)})).sort((a,b)=>b.tot-a.tot);
     const wl=s=>s?`<span style="color:var(--win);font-weight:600">${s.w}</span>–<span style="color:var(--loss);font-weight:600">${s.l}</span>${s.nr?` <span style="color:var(--muted)">(${s.nr} NR)</span>`:''} <span style="color:var(--muted);font-size:11px">${s.ms.filter(m=>m.rp).map(m=>(m.result==='Won'?'W ':'L ')+m.rp+' v '+m.opp_score).join(' · ')}</span>`:'<span style="color:var(--muted)">—</span>';
     $('#yoy-opp').innerHTML=`<thead><tr><th>Opponent</th>${Y.map(y=>`<th>${y}</th>`).join('')}<th class="r">All-time</th></tr></thead><tbody>${rows.map(r=>{const W=Y.reduce((a,y)=>a+(r.v[y]?r.v[y].w:0),0),L=Y.reduce((a,y)=>a+(r.v[y]?r.v[y].l:0),0);return `<tr><td><b>${esc(r.o)}</b></td>${Y.map(y=>`<td>${wl(r.v[y])}</td>`).join('')}<td class="r"><span style="color:var(--win);font-weight:600">${W}</span>–<span style="color:var(--loss);font-weight:600">${L}</span></td></tr>`;}).join('')}</tbody>`;}
+}
+
+/* ---------- all-time: four seasons pooled ---------- */
+{
+  const Y=Object.keys(SEASONS).sort(), CUR=Y[Y.length-1], RP='RoyalsPunters';
+  const ovB=o=>o==null?0:Math.floor(o)*6+Math.round((o-Math.floor(o))*10);
+  const fmtOv=b=>b%6?`${Math.floor(b/6)}.${b%6}`:String(b/6);
+  const numOf=s=>{const m=/^(\d+)/.exec(String(s??''));return m?+m[1]:null;};
+  const mut=t=>`<span style="color:var(--muted)">${t}</span>`, dash=mut('—');
+  const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const n1=v=>v==null?'—':v.toFixed(1), n2=v=>v==null?'—':v.toFixed(2), n0=v=>v==null?'—':Math.round(v);
+  const tbl=(id,head,rows)=>{const el=$('#'+id); if(el) el.innerHTML=`<thead><tr>${head}</tr></thead><tbody>${rows}</tbody>`;};
+
+  const M=[]; Y.forEach(y=>SEASONS[y].matches.forEach(m=>M.push(Object.assign({},m,{y}))));
+  const played=M.filter(m=>m.result==='Won'||m.result==='Lost');
+  const rpFirst=m=>(m.toss&&m.elected)?((m.toss===RP)===(m.elected==='Bat')):null;
+  const oppOf={}; M.forEach(m=>oppOf[m.y+'#'+m.n]=m.opp);
+
+  /* ===== careers ===== */
+  const C={}, P=p=>(C[p]=C[p]||{p,ys:new Set(),m:0,inn:0,runs:0,balls:0,hs:0,f4:0,f6:0,f50:0,
+      bballs:0,bruns:0,w:0,mdns:0,dots:0,ct:0,wkct:0,st:0,ro:0,mom:0,bySeason:{}});
+  Y.forEach(y=>{
+    const d=SEASONS[y], ballsOf={};
+    (d.bat||[]).forEach(r=>{ if(r[6]!=='wd') ballsOf[r[4]]=(ballsOf[r[4]]||0)+1; });
+    d.batting.forEach(b=>{const c=P(b.p);c.ys.add(y);c.inn+=b.inn;c.runs+=b.runs;
+      const bl=ballsOf[b.p]||0; c.balls+=bl; c.f4+=b.f||0; c.f6+=b.s||0; c.f50+=b.fifties||0;
+      const hs=b.hs!=null?+b.hs:Math.max(0,...(d.innings||[]).filter(i=>i.p===b.p).map(i=>i.runs));
+      c.hs=Math.max(c.hs,hs||0);
+      (c.bySeason[y]=c.bySeason[y]||{}).bat={runs:b.runs,inn:b.inn,balls:bl,sr:bl?100*b.runs/bl:null,hs:hs||0};});
+    d.bowling.forEach(b=>{const c=P(b.p);c.ys.add(y);const bb=ovB(b.overs);
+      c.bballs+=bb;c.bruns+=b.runs||0;c.w+=b.w||0;c.mdns+=b.mdns||0;c.dots+=b.dots||0;
+      (c.bySeason[y]=c.bySeason[y]||{}).bowl={balls:bb,runs:b.runs||0,w:b.w||0,eco:bb?(b.runs||0)/(bb/6):null};});
+    (d.fielding||[]).forEach(f=>{const c=P(f.p);c.ys.add(y);
+      c.ct+=f.ct||0;c.wkct+=f.wk||0;c.st+=f.st||0;c.ro+=(f.dro||0)+(f.iro||0);});
+    const mm={}; d.batting.forEach(b=>mm[b.p]=Math.max(mm[b.p]||0,b.m||0));
+    d.bowling.forEach(b=>mm[b.p]=Math.max(mm[b.p]||0,b.m||0));
+    (d.fielding||[]).forEach(f=>mm[f.p]=Math.max(mm[f.p]||0,f.m||0));
+    Object.entries(mm).forEach(([p,n])=>{P(p).m+=n;});
+  });
+  M.forEach(m=>{ if(m.potm && m.potm_team===RP && C[m.potm]) C[m.potm].mom++; });
+  const careers=Object.values(C).map(c=>Object.assign(c,{
+    n:c.ys.size, cur:c.ys.has(CUR), first:[...c.ys].sort()[0], last:[...c.ys].sort().pop(),
+    sr:c.balls?100*c.runs/c.balls:null, eco:c.bballs?c.bruns/(c.bballs/6):null,
+    dis:c.ct+c.wkct+c.st+c.ro, bavg:c.w?c.bruns/c.w:null, sRate:c.w?c.bballs/c.w:null}));
+  const byRuns=[...careers].sort((a,b)=>b.runs-a.runs);
+  const byWkts=[...careers].sort((a,b)=>b.w-a.w);
+  const byDis=[...careers].sort((a,b)=>b.dis-a.dis);
+  const byMom=[...careers].sort((a,b)=>b.mom-a.mom);
+  const byMat=[...careers].sort((a,b)=>b.m-a.m);
+
+  /* ===== best ever ===== */
+  const bestInn=[]; Y.forEach(y=>(SEASONS[y].innings||[]).forEach(i=>
+    bestInn.push({y,p:i.p,runs:i.runs,balls:i.balls,opp:oppOf[y+'#'+i.n]})));
+  bestInn.sort((a,b)=>b.runs-a.runs||a.balls-b.balls);
+  const bestSpell=[]; Y.forEach(y=>(SEASONS[y].spells||[]).forEach(s=>
+    bestSpell.push({y,p:s.p,w:s.w,runs:s.runs,overs:s.overs,opp:s.opp,eco:s.eco})));
+  bestSpell.sort((a,b)=>b.w-a.w||a.runs-b.runs);
+  const bestPt=[]; Y.forEach(y=>(SEASONS[y].partnerships||[]).filter(p=>p.team===RP&&p.a&&p.b).forEach(p=>
+    bestPt.push({y,wkt:p.wkt,a:p.a,b:p.b,ar:p.ar,br:p.br,runs:p.runs,opp:oppOf[y+'#'+p.n]})));
+  bestPt.sort((a,b)=>b.runs-a.runs);
+
+  /* ===== tiles ===== */
+  const t1=byRuns[0],t2=byWkts[0],t3=byDis[0],t4=byMom[0],t5=byMat[0],bi=bestInn[0];
+  $('#at-tiles').innerHTML=[
+    ['Leading run-scorer',t1.runs,`${esc(t1.p)} · ${t1.n} seasons`],
+    ['Leading wicket-taker',t2.w,`${esc(t2.p)} · ${fmtOv(t2.bballs)} overs`],
+    ['Most dismissals',t3.dis,`${esc(t3.p)} · field and keeping`],
+    ['Most awards',t4.mom,`${esc(t4.p)} · player of the match`],
+    ['Most appearances',t5.m,`${esc(t5.p)}`],
+    ['Highest score',bi.runs,`${esc(bi.p)} off ${bi.balls} v ${esc(bi.opp)}, ${bi.y}`],
+  ].map(([k,v,d])=>`<div class="tile"><div class="k">${k}</div><div class="v num">${fmt(v)}</div><div class="d">${d}</div></div>`).join('');
+
+  /* ===== career tables ===== */
+  const yrsCell=c=>`${c.n} ${mut(c.first===c.last?c.first:c.first+'–'+c.last)}`;
+  const statusCell=c=>c.cur?`<span class="pill W">${CUR}</span>`:mut('last '+c.last);
+  tbl('at-bat',
+    `<th>Player</th><th class="r">Seasons</th><th class="r">M</th><th class="r">Inn</th><th class="r">Runs</th><th class="r">SR</th><th class="r">HS</th><th class="r">50s</th><th class="r">4s</th><th class="r">6s</th><th>Status</th>`,
+    byRuns.filter(c=>c.inn>0||c.runs>0).map(c=>`<tr><td><b>${esc(c.p)}</b></td><td class="r">${yrsCell(c)}</td><td class="r">${c.m}</td><td class="r">${c.inn}</td><td class="r"><b>${fmt(c.runs)}</b></td><td class="r">${n0(c.sr)}</td><td class="r">${c.hs||'—'}</td><td class="r">${c.f50||'—'}</td><td class="r">${c.f4||'—'}</td><td class="r">${c.f6||'—'}</td><td>${statusCell(c)}</td></tr>`).join(''));
+  tbl('at-bowl',
+    `<th>Player</th><th class="r">Seasons</th><th class="r">Overs</th><th class="r">Runs</th><th class="r">Wkts</th><th class="r">Econ</th><th class="r">Avg</th><th class="r">SR</th><th class="r">Mdns</th><th>Status</th>`,
+    byWkts.filter(c=>c.bballs>0).map(c=>`<tr><td><b>${esc(c.p)}</b></td><td class="r">${yrsCell(c)}</td><td class="r">${fmtOv(c.bballs)}</td><td class="r">${fmt(c.bruns)}</td><td class="r"><b>${c.w}</b></td><td class="r">${n2(c.eco)}</td><td class="r">${n1(c.bavg)}</td><td class="r">${n1(c.sRate)}</td><td class="r">${c.mdns||'—'}</td><td>${statusCell(c)}</td></tr>`).join(''));
+  tbl('at-field',
+    `<th>Player</th><th class="r">Catches</th><th class="r">WK ct</th><th class="r">Stumpings</th><th class="r">Run-outs</th><th class="r">Total</th>`,
+    byDis.filter(c=>c.dis>0).map(c=>`<tr><td><b>${esc(c.p)}</b></td><td class="r">${c.ct||'—'}</td><td class="r">${c.wkct||'—'}</td><td class="r">${c.st||'—'}</td><td class="r">${c.ro||'—'}</td><td class="r"><b>${c.dis}</b></td></tr>`).join(''));
+  {const rows=byMom.filter(c=>c.mom>0);
+   tbl('at-potm',`<th>Player</th><th class="r">Awards</th><th>Matches</th>`,
+     rows.map(c=>`<tr><td><b>${esc(c.p)}</b></td><td class="r"><b>${c.mom}</b></td><td style="font-size:11.5px">${M.filter(m=>m.potm===c.p&&m.potm_team===RP).map(m=>`${m.y} v ${esc(shortOpp(m.opp))}`).join(', ')}</td></tr>`).join(''));}
+  tbl('at-bi',`<th>Player</th><th class="r">Score</th><th>Opponent</th><th class="r">Season</th>`,
+    bestInn.slice(0,10).map(i=>`<tr><td><b>${esc(i.p)}</b></td><td class="r"><b>${i.runs}</b> ${mut('('+i.balls+')')}</td><td>${esc(i.opp||'—')}</td><td class="r">${i.y}</td></tr>`).join(''));
+  tbl('at-bs',`<th>Player</th><th class="r">Figures</th><th class="r">Overs</th><th>Opponent</th><th class="r">Season</th>`,
+    bestSpell.slice(0,10).map(s=>`<tr><td><b>${esc(s.p)}</b></td><td class="r"><b>${s.w}/${s.runs}</b></td><td class="r">${s.overs}</td><td>${esc(s.opp||'—')}</td><td class="r">${s.y}</td></tr>`).join(''));
+  tbl('at-bp',`<th class="r">Runs</th><th class="r">Wkt</th><th>Batters</th><th>Opponent</th><th class="r">Season</th>`,
+    bestPt.slice(0,10).map(p=>`<tr><td class="r"><b>${p.runs}</b></td><td class="r">${p.wkt}</td><td>${esc(p.a)} ${mut(p.ar)} &amp; ${esc(p.b)} ${mut(p.br)}</td><td>${esc(p.opp||'—')}</td><td class="r">${p.y}</td></tr>`).join(''));
+
+  /* ===== grounds ===== */
+  const G={};
+  played.forEach(m=>{ if(!m.ground) return; const g=G[m.ground]=G[m.ground]||
+      {g:m.ground,n:0,w:0,l:0,first:[],bf:0,bfW:0,ch:0,chW:0,rp:[],op:[]};
+    g.n++; m.result==='Won'?g.w++:g.l++;
+    const f=rpFirst(m), rp=numOf(m.rp), op=numOf(m.opp_score);
+    if(rp!=null)g.rp.push(rp); if(op!=null)g.op.push(op);
+    if(f!=null){const fi=f?rp:op; if(fi!=null)g.first.push(fi);
+      if(f){g.bf++; if(m.result==='Won')g.bfW++;} else {g.ch++; if(m.result==='Won')g.chW++;}}});
+  const grounds=Object.values(G).map(g=>Object.assign(g,{par:mean(g.first),arp:mean(g.rp),aop:mean(g.op),win:100*g.w/g.n})).sort((a,b)=>b.n-a.n);
+  const wr=(w,n)=>n?`${w}/${n} ${mut(Math.round(100*w/n)+'%')}`:dash;
+  tbl('at-ground',
+    `<th>Ground</th><th class="r">Played</th><th class="r">W–L</th><th class="r">Win %</th><th class="r">Par (1st inns)</th><th class="r">RP avg</th><th class="r">Opp avg</th><th class="r">Batting first</th><th class="r">Chasing</th>`,
+    grounds.map(g=>`<tr><td><b>${esc(g.g)}</b></td><td class="r">${g.n}</td><td class="r"><span style="color:var(--win);font-weight:600">${g.w}</span>–<span style="color:var(--loss);font-weight:600">${g.l}</span></td><td class="r">${Math.round(g.win)}%</td><td class="r"><b>${n0(g.par)}</b></td><td class="r">${n0(g.arp)}</td><td class="r">${n0(g.aop)}</td><td class="r">${wr(g.bfW,g.bf)}</td><td class="r">${wr(g.chW,g.ch)}</td></tr>`).join(''));
+  {const big=grounds.filter(g=>g.n>=10), lo=grounds.filter(g=>g.n<10);
+   $('#at-ground-sub').innerHTML=`Par is the average first-innings total at the ground, whoever batted. ${big.map(g=>`<b>${esc(g.g)}</b> ${Math.round(g.win)}%`).join(' · ')} over ${big.reduce((a,g)=>a+g.n,0)} matches. ${lo.length?`${lo.map(g=>esc(g.g)+' ('+g.n+' matches)').join(' and ')} ${lo.length>1?'are':'is'} too small a sample to read into — shown for completeness.`:''}`;}
+
+  /* ===== toss ===== */
+  const tossRows=[];
+  [['Won the toss',m=>m.toss===RP],['Lost the toss',m=>m.toss&&m.toss!==RP],
+   ['Won it and chose to bat',m=>m.toss===RP&&m.elected==='Bat'],['Won it and chose to bowl',m=>m.toss===RP&&m.elected==='Bowl'],
+   ['Batted first, however it came about',m=>rpFirst(m)===true],['Bowled first, however it came about',m=>rpFirst(m)===false]].forEach(([lab,f])=>{
+    const s=played.filter(f), w=s.filter(m=>m.result==='Won').length;
+    tossRows.push({lab,n:s.length,w,l:s.length-w,pct:s.length?100*w/s.length:null});});
+  tbl('at-toss',`<th>Situation</th><th class="r">Matches</th><th class="r">W–L</th><th class="r">Win %</th>`,
+    tossRows.map(t=>`<tr><td>${t.lab}</td><td class="r">${t.n}</td><td class="r"><span style="color:var(--win);font-weight:600">${t.w}</span>–<span style="color:var(--loss);font-weight:600">${t.l}</span></td><td class="r"><b>${t.pct==null?'—':Math.round(t.pct)+'%'}</b></td></tr>`).join(''));
+  {const bat=tossRows[2],bowl=tossRows[3],tw=tossRows[0],tl=tossRows[1];
+   const held=tw.n+tl.n;
+   $('#at-toss-sub').innerHTML=`A toss was held in ${held} of the ${played.length} completed matches — the other ${played.length-held} were won on an opposition forfeit. RoyalsPunters have won it ${tw.n} times and lost it ${tl.n}, and win at ${Math.round(tw.pct)}% either way against ${Math.round(tl.pct)}%, so the toss itself is worth little. The <b>decision</b> is not: choosing to bat has returned ${bat.w}–${bat.l} (${Math.round(bat.pct)}%) against ${bowl.w}–${bowl.l} (${Math.round(bowl.pct)}%) for choosing to bowl. On ${bat.n} and ${bowl.n} matches that is suggestive, not settled.`;}
+
+  /* ===== drivers ===== */
+  const feats=[];
+  Y.forEach(y=>{const d=SEASONS[y];
+    d.matches.filter(m=>m.result==='Won'||m.result==='Lost').forEach(m=>{
+      const bat=(d.bat||[]).filter(r=>r[0]===m.n), bowl=(d.bowl||[]).filter(r=>r[0]===m.n);
+      if(!bat.length||!bowl.length) return;
+      const lb=bat.filter(r=>r[6]!=='wd').length, off=bat.reduce((a,r)=>a+(r[5]||0),0);
+      const bd=bat.filter(r=>r[5]===4||r[5]===6), bdr=bd.reduce((a,r)=>a+r[5],0);
+      const ld=bowl.filter(r=>r[6]!=='wd').length;
+      const ppB=bat.filter(r=>r[1]<=6&&r[6]!=='wd').length, pp=bat.filter(r=>r[1]<=6).reduce((a,r)=>a+(r[5]||0)+(r[7]||0),0);
+      const dB=bat.filter(r=>r[1]>=18&&r[6]!=='wd').length, dth=bat.filter(r=>r[1]>=18).reduce((a,r)=>a+(r[5]||0)+(r[7]||0),0);
+      const pcB=bowl.filter(r=>r[1]<=6&&r[6]!=='wd').length, pc=bowl.filter(r=>r[1]<=6).reduce((a,r)=>a+(r[5]||0)+(r[7]||0),0);
+      feats.push({won:m.result==='Won',
+        bdryConc:bowl.filter(r=>r[5]===4||r[5]===6).reduce((a,r)=>a+r[5],0),
+        dotPctBowled:ld?100*bowl.filter(r=>!r[6]&&r[5]===0).length/ld:null,
+        ppEco:pcB?6*pc/pcB:null,
+        bpb:bd.length?lb/bd.length:null,
+        bdryPct:off?100*bdr/off:null,
+        dotPctFaced:lb?100*bat.filter(r=>!r[6]&&r[5]===0).length/lb:null,
+        deathRR:dB?6*dth/dB:null, ppRR:ppB?6*pp/ppB:null,
+        widesC:bowl.filter(r=>r[6]==='wd').reduce((a,r)=>a+(r[7]||0),0)});});});
+  const sdv=a=>{const m=mean(a);return Math.sqrt(a.reduce((x,v)=>x+(v-m)*(v-m),0)/Math.max(1,a.length-1));};
+  const DRV=[['Boundary runs conceded','bdryConc','lower','runs'],['Dot-ball % bowled','dotPctBowled','higher','%'],
+    ['Powerplay economy conceded','ppEco','lower','per over'],['Balls per boundary scored','bpb','lower','balls'],
+    ['Boundary % of our runs','bdryPct','higher','%'],['Dot-ball % faced','dotPctFaced','lower','%'],
+    ['Death-overs run rate','deathRR','higher','per over'],['Powerplay run rate','ppRR','higher','per over'],
+    ['Wides conceded','widesC','lower','runs']];
+  const drivers=DRV.map(([lab,k,dir,unit])=>{
+    const w=feats.filter(f=>f.won&&f[k]!=null).map(f=>f[k]), l=feats.filter(f=>!f.won&&f[k]!=null).map(f=>f[k]);
+    const mw=mean(w),ml=mean(l);
+    const ps=Math.sqrt(((w.length-1)*sdv(w)**2+(l.length-1)*sdv(l)**2)/Math.max(1,w.length+l.length-2));
+    const dd=ps?(mw-ml)/ps:0;
+    return {lab,unit,mw,ml,d:dd,mag:Math.abs(dd)};}).sort((a,b)=>b.mag-a.mag);
+  const strength=m=>m>=0.8?['Large','var(--win)']:m>=0.5?['Moderate','var(--gold)']:m>=0.2?['Small','var(--muted)']:['Negligible','var(--muted)'];
+  const maxMag=Math.max(...drivers.map(d=>d.mag));
+  tbl('at-drv',
+    `<th>Measure</th><th class="r">In wins</th><th class="r">In losses</th><th class="r">Gap</th><th class="r">Effect size</th><th>Strength</th>`,
+    drivers.map(d=>{const [lab,col]=strength(d.mag);
+      return `<tr><td><b>${d.lab}</b> ${mut(d.unit)}</td><td class="r"><b>${n1(d.mw)}</b></td><td class="r">${n1(d.ml)}</td><td class="r">${d.mw>d.ml?'+':''}${n1(d.mw-d.ml)}</td><td class="r">${d.d.toFixed(2)}</td><td><span style="display:inline-block;height:6px;width:${Math.round(70*d.mag/maxMag)}px;background:${col};border-radius:3px;vertical-align:middle"></span> <span style="color:${col}">${lab}</span></td></tr>`;}).join(''));
+  {const top=drivers[0], worst=drivers[drivers.length-1];
+   $('#at-drv-sub').innerHTML=`Each measure compared across the ${feats.length} completed matches with a ball-by-ball feed. Effect size is Cohen's d — the gap between wins and losses in standard deviations, so measures on different scales can be ranked against each other. Above 0.8 is large. <b>${top.lab}</b> separates them furthest: ${n1(top.mw)} in wins against ${n1(top.ml)} in losses. <b>${worst.lab}</b> barely moves (${n1(worst.mw)} v ${n1(worst.ml)}), which is worth knowing given how often it gets blamed.`;}
+
+  /* ===== opposition ===== */
+  const O={};
+  played.forEach(m=>{const o=O[m.opp]=O[m.opp]||{o:m.opp,n:0,w:0,l:0,ys:new Set(),g:{}};
+    o.n++; m.result==='Won'?o.w++:o.l++; o.ys.add(m.y);
+    if(m.ground){const g=o.g[m.ground]=o.g[m.ground]||{n:0,w:0}; g.n++; if(m.result==='Won')g.w++;}});
+  const oppTeams=Object.values(O).sort((a,b)=>b.n-a.n);
+  tbl('at-opp',
+    `<th>Opponent</th><th class="r">Seasons</th><th class="r">Played</th><th class="r">W–L</th><th class="r">Win %</th><th>By ground</th>`,
+    oppTeams.map(o=>`<tr><td><b>${esc(o.o)}</b></td><td class="r">${o.ys.size}</td><td class="r">${o.n}</td><td class="r"><span style="color:var(--win);font-weight:600">${o.w}</span>–<span style="color:var(--loss);font-weight:600">${o.l}</span></td><td class="r">${Math.round(100*o.w/o.n)}%</td><td style="font-size:11.5px">${Object.entries(o.g).map(([g,v])=>`${esc(g)} ${v.w}/${v.n}`).join(' · ')}</td></tr>`).join(''));
+  const OB={}, OW={};
+  Y.forEach(y=>{const d=SEASONS[y], team={}; d.matches.forEach(m=>team[m.n]=m.opp);
+    (d.bowl||[]).forEach(r=>{const k=r[4]; if(!k)return; const x=OB[k]=OB[k]||{p:k,runs:0,balls:0,out:0,ys:new Set(),teams:new Set()};
+      x.runs+=r[5]||0; if(r[6]!=='wd')x.balls++; if(r[9])x.out++; x.ys.add(y); if(team[r[0]])x.teams.add(team[r[0]]);});
+    (d.bat||[]).forEach(r=>{const k=r[3]; if(!k)return; const x=OW[k]=OW[k]||{p:k,runs:0,balls:0,w:0,ys:new Set(),teams:new Set()};
+      x.runs+=(r[5]||0)+(r[7]||0); if(r[6]!=='wd')x.balls++; if(r[9]&&r[9]!=='run out')x.w++; x.ys.add(y); if(team[r[0]])x.teams.add(team[r[0]]);});});
+  const oppBat=Object.values(OB).map(x=>Object.assign(x,{sr:x.balls?100*x.runs/x.balls:null})).sort((a,b)=>b.runs-a.runs).slice(0,15);
+  const oppBowl=Object.values(OW).map(x=>Object.assign(x,{eco:x.balls?x.runs/(x.balls/6):null})).sort((a,b)=>b.w-a.w||a.eco-b.eco).slice(0,15);
+  tbl('at-oppbat',`<th>Batter</th><th>Club</th><th class="r">Runs</th><th class="r">Balls</th><th class="r">SR</th><th class="r">Out</th><th class="r">Seasons</th>`,
+    oppBat.map(o=>`<tr><td><b>${esc(o.p)}</b></td><td style="font-size:11.5px">${[...o.teams].map(esc).join(', ')}</td><td class="r"><b>${o.runs}</b></td><td class="r">${o.balls}</td><td class="r">${n0(o.sr)}</td><td class="r">${o.out}</td><td class="r">${o.ys.size}</td></tr>`).join(''));
+  tbl('at-oppbowl',`<th>Bowler</th><th>Club</th><th class="r">Wkts</th><th class="r">Overs</th><th class="r">Econ</th><th class="r">Seasons</th>`,
+    oppBowl.map(o=>`<tr><td><b>${esc(o.p)}</b></td><td style="font-size:11.5px">${[...o.teams].map(esc).join(', ')}</td><td class="r"><b>${o.w}</b></td><td class="r">${fmtOv(o.balls)}</td><td class="r">${n2(o.eco)}</td><td class="r">${o.ys.size}</td></tr>`).join(''));
+
+  /* ===== career arcs ===== */
+  {const arc=careers.filter(c=>c.n>=2&&c.runs>=50).map(c=>{
+      const ys=Y.filter(y=>c.bySeason[y]&&c.bySeason[y].bat);
+      const pts=ys.map(y=>({y,r:c.bySeason[y].bat.runs,sr:c.bySeason[y].bat.sr}));
+      const peak=pts.reduce((a,x)=>!a||x.r>a.r?x:a,null);
+      const last=pts[pts.length-1], first=pts[0];
+      const after=pts.filter(x=>x.y>peak.y);
+      const dir = pts.length<2?'—' : last.y===peak.y?'rising' : (after.length&&mean(after.map(x=>x.r))<peak.r*0.6?'declining':'holding');
+      return {c,pts,peak,last,first,dir,trend:last.r-first.r};}).sort((a,b)=>b.c.runs-a.c.runs);
+   const spark=pts=>{const mx=Math.max(...pts.map(p=>p.r))||1;
+     return `<span style="display:inline-flex;gap:3px;align-items:flex-end;height:26px">${Y.map(y=>{const p=pts.find(q=>q.y===y);
+       return p?`<span title="${y}: ${p.r}" style="display:inline-block;width:12px;height:${Math.max(3,Math.round(24*p.r/mx))}px;background:${p.r===mx?'var(--accent)':'var(--ramp-3)'};border-radius:2px"></span>`
+                :`<span style="display:inline-block;width:12px;height:3px;background:var(--line);border-radius:2px"></span>`;}).join('')}</span>`;};
+   const dirPill=d=>d==='rising'?`<span class="pill W">rising</span>`:d==='declining'?`<span class="pill L">declining</span>`:d==='holding'?`<span class="pill N">holding</span>`:dash;
+   tbl('at-arc',
+     `<th>Player</th><th>${Y.join(' · ')}</th><th class="r">Career runs</th><th class="r">Peak season</th><th class="r">Latest</th><th class="r">First → latest</th><th>Trajectory</th>`,
+     arc.map(a=>`<tr><td><b>${esc(a.c.p)}</b></td><td>${spark(a.pts)}</td><td class="r"><b>${fmt(a.c.runs)}</b></td><td class="r"><b>${a.peak.y}</b> ${mut(a.peak.r)}</td><td class="r">${a.last.y===CUR?`<b>${a.last.r}</b>`:mut(a.last.y+': '+a.last.r)}</td><td class="r" style="color:${a.trend>0?'var(--win)':a.trend<0?'var(--loss)':'var(--muted)'};font-weight:600">${a.trend>0?'+':''}${a.trend}</td><td>${dirPill(a.dir)}</td></tr>`).join(''));
+   $('#at-arc-sub').innerHTML=`Players with two or more seasons and 50+ career runs. The bars are runs per season, tallest is their peak; a flat grey stub means they did not play that year. <b>Rising</b> means their best season is the most recent one, <b>declining</b> that they have since fallen below 60% of it, <b>holding</b> anything between. ${arc.filter(a=>a.dir==='rising').length} rising, ${arc.filter(a=>a.dir==='holding').length} holding, ${arc.filter(a=>a.dir==='declining').length} declining.`;}
+
+  /* ===== pairs ===== */
+  {const PR={};
+   Y.forEach(y=>(SEASONS[y].partnerships||[]).filter(p=>p.team===RP&&p.a&&p.b).forEach(p=>{
+     const s=[p.a,p.b].sort(), k=s.join(' & ');
+     const x=PR[k]=PR[k]||{k,a:s[0],b:s[1],n:0,runs:0,best:0,ys:new Set(),f50:0};
+     x.n++; x.runs+=p.runs||0; x.best=Math.max(x.best,p.runs||0); x.ys.add(y); if((p.runs||0)>=50)x.f50++;}));
+   const pairs=Object.values(PR).filter(x=>x.n>=3).map(x=>Object.assign(x,{avg:x.runs/x.n})).sort((a,b)=>b.runs-a.runs);
+   tbl('at-pairs',`<th>Pair</th><th class="r">Stands</th><th class="r">Seasons</th><th class="r">Runs</th><th class="r">Average</th><th class="r">Best</th><th class="r">50+ stands</th>`,
+     pairs.map(p=>`<tr><td><b>${esc(p.a)}</b> &amp; <b>${esc(p.b)}</b></td><td class="r">${p.n}</td><td class="r">${p.ys.size}</td><td class="r"><b>${fmt(p.runs)}</b></td><td class="r">${n1(p.avg)}</td><td class="r">${p.best}</td><td class="r">${p.f50||'—'}</td></tr>`).join(''));}
+
+  /* ===== squad construction ===== */
+  {const sq={}; Y.forEach(y=>{const d=SEASONS[y]; sq[y]=new Set([...d.batting.map(b=>b.p),...d.bowling.map(b=>b.p)]);});
+   const core=[...new Set(Y.flatMap(y=>[...sq[y]]))].filter(p=>Y.every(y=>sq[y].has(p)));
+   const build=Y.map((y,i)=>{const d=SEASONS[y], prev=i?sq[Y[i-1]]:null;
+     const tot=d.batting.reduce((a,b)=>a+b.runs,0), totW=d.bowling.reduce((a,b)=>a+b.w,0);
+     const coreR=d.batting.filter(b=>core.includes(b.p)).reduce((a,b)=>a+b.runs,0);
+     const coreW=d.bowling.filter(b=>core.includes(b.p)).reduce((a,b)=>a+b.w,0);
+     const np=prev?[...sq[y]].filter(p=>!prev.has(p)):null;
+     const newR=np?d.batting.filter(b=>np.includes(b.p)).reduce((a,b)=>a+b.runs,0):null;
+     const t=(d.table||[]).find(r=>r.team===RP);
+     const ms=d.matches.filter(m=>m.result==='Won'||m.result==='Lost');
+     return {y,sqn:sq[y].size,kept:prev?[...sq[y]].filter(p=>prev.has(p)).length:null,newN:np?np.length:null,
+       corePct:tot?100*coreR/tot:null, coreWPct:totW?100*coreW/totW:null, newPct:tot&&newR!=null?100*newR/tot:null,
+       pos:t?t.pos:null, w:ms.filter(m=>m.result==='Won').length, l:ms.filter(m=>m.result==='Lost').length};});
+   const bar=(v,col)=>v==null?dash:`<span style="display:inline-block;height:6px;width:${Math.round(60*v/100)}px;background:${col};border-radius:3px;vertical-align:middle"></span> ${Math.round(v)}%`;
+   tbl('at-build',
+     `<th class="r">Season</th><th class="r">Squad used</th><th class="r">Retained</th><th class="r">New</th><th>Runs from the four-season core</th><th>Wickets from the core</th><th>Runs from newcomers</th><th class="r">Finish</th><th class="r">W–L</th>`,
+     build.map(b=>`<tr><td class="r"><b>${b.y}</b></td><td class="r">${b.sqn}</td><td class="r">${b.kept??dash}</td><td class="r">${b.newN??dash}</td><td>${bar(b.corePct,'var(--accent)')}</td><td>${bar(b.coreWPct,'var(--s3)')}</td><td>${bar(b.newPct,'var(--s2)')}</td><td class="r">${b.pos?'#'+b.pos:dash}</td><td class="r"><span style="color:var(--win);font-weight:600">${b.w}</span>–<span style="color:var(--loss);font-weight:600">${b.l}</span></td></tr>`).join(''));
+   $('#at-build-sub').innerHTML=`The core is the ${core.length} players who have appeared in all ${Y.length} seasons: ${core.sort().map(esc).join(', ')}. Between ${Math.round(Math.min(...build.map(b=>b.corePct)))}% and ${Math.round(Math.max(...build.map(b=>b.corePct)))}% of the runs in any season come from them, from a squad of ${Math.min(...build.map(b=>b.sqn))}–${Math.max(...build.map(b=>b.sqn))}. Retention and league finish are shown together so the two can be read against each other, on four seasons.`;}
+
+  /* ===== phases ===== */
+  {const PH=[['Powerplay (1–6)',r=>r[1]<=6],['Middle (7–17)',r=>r[1]>=7&&r[1]<=17],['Death (18–25)',r=>r[1]>=18]];
+   const rows=PH.map(([lab,f],i)=>{
+     const bat=Y.map(y=>{const b=(SEASONS[y].bat||[]).filter(f); const bb=b.filter(r=>r[6]!=='wd').length;
+       return bb?6*b.reduce((a,r)=>a+(r[5]||0)+(r[7]||0),0)/bb:null;});
+     const bwl=Y.map(y=>{const w=(SEASONS[y].bowl||[]).filter(f); const wb=w.filter(r=>r[6]!=='wd').length;
+       return wb?6*w.reduce((a,r)=>a+(r[5]||0)+(r[7]||0),0)/wb:null;});
+     return {lab,bat,bwl};});
+   const cell=(v,best,worst)=>v==null?dash:`<span style="font-weight:${v===best?600:400};color:${v===best?'var(--win)':v===worst?'var(--loss)':'inherit'}">${n2(v)}</span>`;
+   tbl('at-phase',
+     `<th>Phase</th>${Y.map(y=>`<th class="r">${y} scored</th>`).join('')}${Y.map(y=>`<th class="r">${y} conceded</th>`).join('')}<th class="r">Net now</th>`,
+     rows.map(r=>{const bB=Math.max(...r.bat.filter(x=>x!=null)), bW=Math.min(...r.bat.filter(x=>x!=null));
+       const cB=Math.min(...r.bwl.filter(x=>x!=null)), cW=Math.max(...r.bwl.filter(x=>x!=null));
+       const net=r.bat[Y.length-1]!=null&&r.bwl[Y.length-1]!=null?r.bat[Y.length-1]-r.bwl[Y.length-1]:null;
+       return `<tr><td><b>${r.lab}</b></td>${r.bat.map(v=>`<td class="r">${cell(v,bB,bW)}</td>`).join('')}${r.bwl.map(v=>`<td class="r">${cell(v,cB,cW)}</td>`).join('')}<td class="r" style="font-weight:600;color:${net>0?'var(--win)':'var(--loss)'}">${net==null?'—':(net>0?'+':'')+n2(net)}</td></tr>`;}).join(''));}
+
+  /* ===== milestones ===== */
+  {const RT=[100,250,500,1000,1500,2000], WT=[10,25,50,75,100], DT=[10,25,50];
+   const nx=(v,ts)=>ts.find(t=>t>v)??null;
+   const rows=careers.filter(c=>c.cur).map(c=>({p:c.p,runs:c.runs,w:c.w,dis:c.dis,
+       nr:nx(c.runs,RT),nw:nx(c.w,WT),nd:nx(c.dis,DT)}))
+     .map(x=>Object.assign(x,{gr:x.nr?x.nr-x.runs:null,gw:x.nw?x.nw-x.w:null,gd:x.nd?x.nd-x.dis:null}))
+     .map(x=>Object.assign(x,{near:Math.min(x.gr??1e9,(x.gw??1e9)*12,(x.gd??1e9)*12)}))
+     .sort((a,b)=>a.near-b.near);
+   const goal=(cur,next,gap,unit)=>next==null?dash:`${fmt(cur)} → <b>${fmt(next)}</b> ${mut(gap+' '+unit+' away')}`;
+   tbl('at-miles',`<th>Player</th><th>Next runs milestone</th><th>Next wickets milestone</th><th>Next dismissals milestone</th>`,
+     rows.map(x=>`<tr><td><b>${esc(x.p)}</b></td><td>${goal(x.runs,x.nr,x.gr,'runs')}</td><td>${goal(x.w,x.nw,x.gw,'wickets')}</td><td>${goal(x.dis,x.nd,x.gd,'dismissals')}</td></tr>`).join(''));
+   const soon=rows.filter(x=>x.gr!=null&&x.gr<=100).slice(0,3);
+   $('#at-miles-sub').innerHTML=`Career totals for the ${rows.length} players in the ${CUR} squad, against club milestones. ${soon.length?`Closest: ${soon.map(x=>`<b>${esc(x.p)}</b> needs ${x.gr} for ${fmt(x.nr)}`).join(', ')}.`:''}`;}
 }
 
 /* ---------- sub-navigation, player search ---------- */
