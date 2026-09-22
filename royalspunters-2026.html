@@ -2863,23 +2863,38 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     oppBowl.map(o=>`<tr><td><b>${esc(o.p)}</b></td><td style="font-size:11.5px">${[...o.teams].map(esc).join(', ')}</td><td class="r"><b>${o.w}</b></td><td class="r">${fmtOv(o.balls)}</td><td class="r">${n2(o.eco)}</td><td class="r">${o.ys.size}</td></tr>`).join(''));
 
   /* ===== career arcs ===== */
-  {const arc=careers.filter(c=>c.n>=2&&c.runs>=50).map(c=>{
-      const ys=Y.filter(y=>c.bySeason[y]&&c.bySeason[y].bat);
-      const pts=ys.map(y=>({y,r:c.bySeason[y].bat.runs,sr:c.bySeason[y].bat.sr}));
-      const peak=pts.reduce((a,x)=>!a||x.r>a.r?x:a,null);
-      const last=pts[pts.length-1], first=pts[0];
-      const after=pts.filter(x=>x.y>peak.y);
-      const dir = pts.length<2?'—' : last.y===peak.y?'rising' : (after.length&&mean(after.map(x=>x.r))<peak.r*0.6?'declining':'holding');
-      return {c,pts,peak,last,first,dir,trend:last.r-first.r};}).sort((a,b)=>b.c.runs-a.c.runs);
-   const spark=pts=>{const mx=Math.max(...pts.map(p=>p.r))||1;
+  {const trajOf=pts=>{ if(pts.length<2) return '—';
+     const peak=pts.reduce((a,x)=>!a||x.v>a.v?x:a,null), last=pts[pts.length-1];
+     if(last.y===peak.y) return 'rising';
+     const after=pts.filter(x=>x.y>peak.y);
+     return (after.length&&mean(after.map(x=>x.v))<peak.v*0.6)?'declining':'holding';};
+   const seriesOf=(c,kind)=>Y.filter(y=>c.bySeason[y]&&c.bySeason[y][kind])
+     .map(y=>({y,v:kind==='bat'?c.bySeason[y].bat.runs:c.bySeason[y].bowl.w}));
+   const arc=careers.filter(c=>c.n>=2&&(c.runs>=50||c.w>=5)).map(c=>{
+       const b=seriesOf(c,'bat'), w=seriesOf(c,'bowl');
+       const okB=c.runs>=50&&b.length>=2, okW=c.w>=5&&w.length>=2;
+       return {c,b,w,okB,okW,
+         pkB:b.length?b.reduce((a,x)=>!a||x.v>a.v?x:a,null):null,
+         pkW:w.length?w.reduce((a,x)=>!a||x.v>a.v?x:a,null):null,
+         tB:okB?trajOf(b):'—', tW:okW?trajOf(w):'—'};})
+     .sort((a,b)=>(b.c.runs+b.c.w*12)-(a.c.runs+a.c.w*12));
+   const spark=(pts,col)=>{ if(!pts.length) return dash;
+     const mx=Math.max(...pts.map(p=>p.v))||1;
      return `<span style="display:inline-flex;gap:3px;align-items:flex-end;height:26px">${Y.map(y=>{const p=pts.find(q=>q.y===y);
-       return p?`<span title="${y}: ${p.r}" style="display:inline-block;width:12px;height:${Math.max(3,Math.round(24*p.r/mx))}px;background:${p.r===mx?'var(--accent)':'var(--ramp-3)'};border-radius:2px"></span>`
-                :`<span style="display:inline-block;width:12px;height:3px;background:var(--line);border-radius:2px"></span>`;}).join('')}</span>`;};
-   const dirPill=d=>d==='rising'?`<span class="pill W">rising</span>`:d==='declining'?`<span class="pill L">declining</span>`:d==='holding'?`<span class="pill N">holding</span>`:dash;
-   tbl('at-arc',
-     `<th>Player</th><th>${Y.join(' · ')}</th><th class="r">Career runs</th><th class="r">Peak season</th><th class="r">Latest</th><th class="r">First → latest</th><th>Trajectory</th>`,
-     arc.map(a=>`<tr><td><b>${esc(a.c.p)}</b></td><td>${spark(a.pts)}</td><td class="r"><b>${fmt(a.c.runs)}</b></td><td class="r"><b>${a.peak.y}</b> ${mut(a.peak.r)}</td><td class="r">${a.last.y===CUR?`<b>${a.last.r}</b>`:mut(a.last.y+': '+a.last.r)}</td><td class="r" style="color:${a.trend>0?'var(--win)':a.trend<0?'var(--loss)':'var(--muted)'};font-weight:600">${a.trend>0?'+':''}${a.trend}</td><td>${dirPill(a.dir)}</td></tr>`).join(''));
-   $('#at-arc-sub').innerHTML=`Players with two or more seasons and 50+ career runs. The bars are runs per season, tallest is their peak; a flat grey stub means they did not play that year. <b>Rising</b> means their best season is the most recent one, <b>declining</b> that they have since fallen below 60% of it, <b>holding</b> anything between. ${arc.filter(a=>a.dir==='rising').length} rising, ${arc.filter(a=>a.dir==='holding').length} holding, ${arc.filter(a=>a.dir==='declining').length} declining.`;}
+       return p?`<span title="${y}: ${p.v}" style="display:inline-block;width:12px;height:${Math.max(3,Math.round(24*p.v/mx))}px;background:${p.v===mx?col:'var(--ramp-3)'};border-radius:2px"></span>`
+               :`<span title="${y}: did not play" style="display:inline-block;width:12px;height:3px;background:var(--line);border-radius:2px"></span>`;}).join('')}</span>`;};
+   const pill=t=>t==='rising'?`<span class="pill W">rising</span>`:t==='declining'?`<span class="pill L">declining</span>`:t==='holding'?`<span class="pill N">holding</span>`:dash;
+   const pk=x=>x?`<b>${x.y}</b> ${mut(x.v)}`:dash;
+   const head=`<tr><th rowspan="2">Player</th><th class="r grp" colspan="4">Batting — runs per season</th><th class="r grp" colspan="4">Bowling — wickets per season</th></tr>`
+     +`<tr><th>${Y.join(' · ')}</th><th class="r">Runs</th><th class="r">Peak</th><th>Trajectory</th>`
+     +`<th>${Y.join(' · ')}</th><th class="r">Wkts</th><th class="r">Peak</th><th>Trajectory</th></tr>`;
+   const el=$('#at-arc');
+   if(el) el.innerHTML=`<thead>${head}</thead><tbody>${arc.map(a=>
+     `<tr><td><b>${esc(a.c.p)}</b></td>`
+     +`<td>${a.b.length?spark(a.b,'var(--accent)'):dash}</td><td class="r">${a.c.runs?`<b>${fmt(a.c.runs)}</b>`:dash}</td><td class="r">${a.okB?pk(a.pkB):dash}</td><td>${pill(a.tB)}</td>`
+     +`<td>${a.w.length?spark(a.w,'var(--s3)'):dash}</td><td class="r">${a.c.w?`<b>${a.c.w}</b>`:dash}</td><td class="r">${a.okW?pk(a.pkW):dash}</td><td>${pill(a.tW)}</td></tr>`).join('')}</tbody>`;
+   const nB=arc.filter(a=>a.okB), nW=arc.filter(a=>a.okW);
+   $('#at-arc-sub').innerHTML=`Batting and bowling read separately, because most of this squad does both and a trajectory in one says nothing about the other: ${esc(byWkts[0].p)}'s ${byWkts[0].w} wickets matter far more than ${byWkts[0].runs} career runs. Bars are runs, then wickets, per season; tallest is that player's peak and a flat grey stub means they did not play that year. <b>Rising</b> means their best season is the most recent, <b>declining</b> that they have since fallen below 60% of it, <b>holding</b> anything between. Shown for anyone with two or more seasons and either 50 career runs or 5 career wickets; a trajectory is only judged where there are two seasons of that discipline. Batting: ${nB.filter(a=>a.tB==='rising').length} rising, ${nB.filter(a=>a.tB==='holding').length} holding, ${nB.filter(a=>a.tB==='declining').length} declining. Bowling: ${nW.filter(a=>a.tW==='rising').length} rising, ${nW.filter(a=>a.tW==='holding').length} holding, ${nW.filter(a=>a.tW==='declining').length} declining.`;}
 
   /* ===== pairs ===== */
   {const PR={};
