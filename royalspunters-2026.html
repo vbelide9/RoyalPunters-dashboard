@@ -67,6 +67,7 @@ tr.morerow td{text-align:center;border-bottom:0;padding:8px}
 .season-pick select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .season-pick select option{background:var(--surface);color:var(--ink);font-weight:500}
 @media (max-width:560px){.season-pick>label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.tabs-in{gap:8px}}
+th.grp{border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:600}
 .gloss{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:0;font-size:13px}
 .gloss dt{font-weight:600;white-space:nowrap}.gloss dd{margin:0;color:var(--ink-2)}
 @media (max-width:640px){.heat.ovh,.heat.pos{display:none}.heat.ovh+.legend{display:none}.search{display:none}.gloss{grid-template-columns:1fr}}
@@ -1049,8 +1050,8 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
       <div class="card span"><h2>The seasons</h2><div class="sub">League finish, record and the headline team numbers for each season.</div><div class="tw"><table id="yoy-team"></table></div></div>
       <div class="card"><h2>Batting by phase</h2><div class="sub">RoyalsPunters run rate in the powerplay (1–6), middle (7–17) and death (18–25), each season.</div><div class="legend" id="yoy-leg1"></div><div class="chart" id="yoy-batphase"></div></div>
       <div class="card"><h2>Bowling by phase</h2><div class="sub">Economy conceded in each phase, each season.</div><div class="legend" id="yoy-leg2"></div><div class="chart" id="yoy-bowlphase"></div></div>
-      <div class="card span"><h2>Players across the seasons — batting</h2><div class="sub">Everyone who batted in more than one season, every season side by side. Each season cell is runs with strike rate dimmed beside it; a dash means the player did not play that season. First → last compares their first and last season, not fixed years.</div><div class="tw"><table id="yoy-bat"></table></div></div>
-      <div class="card span"><h2>Players across the seasons — bowling</h2><div class="sub">Everyone who bowled in more than one season. Each season cell is wickets with economy dimmed beside it; a dash means the player did not bowl that season.</div><div class="tw"><table id="yoy-bowl"></table></div></div>
+      <div class="card span"><h2>Players across the seasons — batting</h2><div class="sub">Everyone who batted in more than one season. Under each year: <b>runs</b> in bold, that season's <span style="color:var(--muted)">strike rate</span> dimmed beside it. A dash means no innings that season. Runs, SR and HS on the right are career figures across the seasons played, and First → last compares each player's own first and last season rather than fixed years.</div><div class="tw"><table id="yoy-bat"></table></div></div>
+      <div class="card span"><h2>Players across the seasons — bowling</h2><div class="sub">Everyone who bowled in more than one season. Under each year: <b>wickets</b> in bold, that season's <span style="color:var(--muted)">economy</span> dimmed beside it. A dash means no overs that season. Overs, Wkts and Econ on the right are career figures across the seasons played.</div><div class="tw"><table id="yoy-bowl"></table></div></div>
       <div class="card span"><h2>Squad churn</h2><div class="sub" id="yoy-churn-sub"></div><div class="tw"><table id="yoy-churn"></table></div></div>
       <div class="card span"><h2>Opponents across the seasons</h2><div class="sub">Our record against each team we have met more than once, season by season.</div><div class="tw"><table id="yoy-opp"></table></div></div>
     </div>
@@ -2600,6 +2601,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
   const d=(a,b,dec=0,inv=false)=>{if(a==null||b==null)return '';const v=b-a;const good=inv?v<0:v>0;return `<span style="color:${v===0?'var(--muted)':good?'var(--win)':'var(--loss)'};font-weight:600">${v>0?'+':''}${v.toFixed(dec)}</span>`;};
   const mut=t=>`<span style="color:var(--muted)">${t}</span>`, dash=mut('—');
   const yhead=Y.map(y=>`<th class="r">${y}</th>`).join('');
+  const grp=(unit,career)=>`<tr><th rowspan="2">Player</th><th class="r grp" colspan="${Y.length}">By season — ${unit}</th><th class="r grp" colspan="${career}">Career total, all seasons played</th><th rowspan="2" class="r">First → last</th></tr>`;
   /* one row per player, one column per season: a player absent in a season gets a dash,
      which is the point - the squad has turned over every year. */
   {const rows=both('bat').map(([p,v])=>{
@@ -2612,7 +2614,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
               f:v.bat[ys[0]],l:v.bat[ys[ys.length-1]],fy:ys[0],ly:ys[ys.length-1]};
     }).sort((a,b)=>b.runs-a.runs);
     const cell=x=>x?`<b>${x.runs}</b> ${mut(x.sr?x.sr.toFixed(0):'—')}`:dash;
-    $('#yoy-bat').innerHTML=`<thead><tr><th>Player</th>${yhead}<th class="r">Seasons</th><th class="r">Inn</th><th class="r">Runs</th><th class="r">SR</th><th class="r">HS</th><th class="r">First → last</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td>${r.per.map(x=>`<td class="r">${cell(x)}</td>`).join('')}<td class="r">${r.n}</td><td class="r">${r.inn}</td><td class="r"><b>${r.runs}</b></td><td class="r">${r.sr?r.sr.toFixed(0):'—'}</td><td class="r">${r.hs||'—'}</td><td class="r">${d(r.f.runs,r.l.runs)} ${mut(r.fy+'→'+r.ly)}</td></tr>`).join('')}</tbody>`;}
+    $('#yoy-bat').innerHTML=`<thead>${grp('runs · strike rate',5)}<tr>${yhead}<th class="r">Seasons</th><th class="r">Inn</th><th class="r">Runs</th><th class="r">SR</th><th class="r">HS</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td>${r.per.map(x=>`<td class="r">${cell(x)}</td>`).join('')}<td class="r">${r.n}</td><td class="r">${r.inn}</td><td class="r"><b>${r.runs}</b></td><td class="r">${r.sr?r.sr.toFixed(0):'—'}</td><td class="r">${r.hs||'—'}</td><td class="r">${d(r.f.runs,r.l.runs)} ${mut(r.fy+'→'+r.ly)}</td></tr>`).join('')}</tbody>`;}
 
   {const rows=both('bowl').map(([p,v])=>{
       const per=Y.map(y=>v.bowl[y]||null), seen=per.filter(Boolean);
@@ -2623,7 +2625,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
               f:v.bowl[ys[0]],l:v.bowl[ys[ys.length-1]],fy:ys[0],ly:ys[ys.length-1]};
     }).sort((a,b)=>b.w-a.w);
     const cell=x=>x?`<b>${x.w}</b> ${mut(x.eco.toFixed(2))}`:dash;
-    $('#yoy-bowl').innerHTML=`<thead><tr><th>Player</th>${yhead}<th class="r">Seasons</th><th class="r">Overs</th><th class="r">Wkts</th><th class="r">Econ</th><th class="r">First → last</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td>${r.per.map(x=>`<td class="r">${cell(x)}</td>`).join('')}<td class="r">${r.n}</td><td class="r">${Math.floor(r.balls/6)}${r.balls%6?'.'+(r.balls%6):''}</td><td class="r"><b>${r.w}</b></td><td class="r">${r.eco?r.eco.toFixed(2):'—'}</td><td class="r">${d(r.f.w,r.l.w)} ${mut(r.fy+'→'+r.ly)}</td></tr>`).join('')}</tbody>`;}
+    $('#yoy-bowl').innerHTML=`<thead>${grp('wickets · economy',4)}<tr>${yhead}<th class="r">Seasons</th><th class="r">Overs</th><th class="r">Wkts</th><th class="r">Econ</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.p)}</b></td>${r.per.map(x=>`<td class="r">${cell(x)}</td>`).join('')}<td class="r">${r.n}</td><td class="r">${Math.floor(r.balls/6)}${r.balls%6?'.'+(r.balls%6):''}</td><td class="r"><b>${r.w}</b></td><td class="r">${r.eco?r.eco.toFixed(2):'—'}</td><td class="r">${d(r.f.w,r.l.w)} ${mut(r.fy+'→'+r.ly)}</td></tr>`).join('')}</tbody>`;}
 
   /* squad churn: how many played each season, how many were new, how many did not return */
   {const sq={};Y.forEach(y=>{const d=SEASONS[y];sq[y]=new Set([...d.batting.map(b=>b.p),...d.bowling.map(b=>b.p)]);});
