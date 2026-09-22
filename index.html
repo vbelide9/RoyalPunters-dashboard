@@ -329,12 +329,13 @@ tr.grp th:after{display:none}
 .findings li.pl b{color:var(--ink);font-weight:600}
 .findings li.pl>span{display:inline}
 h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.heat.sq{grid-template-columns:auto repeat(15,minmax(30px,1fr)) auto;gap:3px;min-width:720px}
-.heat.sq .hr{text-align:left;padding-right:6px;white-space:nowrap;font-size:12px}
+.heat.sq{grid-template-columns:minmax(120px,auto) repeat(var(--cols,15),minmax(26px,1fr)) minmax(72px,auto);gap:3px}
+.heat.sq .hr{position:sticky;left:0;z-index:1;background:var(--surface);text-align:left;padding-right:10px;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis}
 .heat.sq .c{height:26px;font-size:11px;font-weight:600;border-radius:4px}
 .heat.sq .c.w{background:var(--win);color:#fff} .heat.sq .c.l{background:var(--loss);color:#fff}
 .heat.sq .c.o{background:transparent;box-shadow:inset 0 0 0 1px var(--line-soft)}
-.heat.sq .hh{font-size:10.5px}
+.heat.sq .hh{font-size:10.5px;line-height:1.25}
+.heat.sq .hh.corner{position:sticky;left:0;z-index:2;background:var(--surface)}
 .heat.sq .rec{font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2);line-height:26px;padding-left:8px;white-space:nowrap}
 .heat .c.z{background:transparent;box-shadow:inset 0 0 0 1px var(--line-soft);color:var(--muted)}
 .heat.rmat .c{font-weight:600;font-size:12.5px;color:var(--ink)}
@@ -634,12 +635,12 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
         <div class="tw"><table id="t-bestphase"></table></div>
       </div>
 <div class="card span">
-        <h2>Batting: top-five teams v bottom four</h2>
+        <h2>Batting: top five v the rest</h2>
         <div class="sub">Each batter's record against the other sides that finished in the top five and against the rest of the table. Innings from the partnership rows, balls from the ball-by-ball. Batters with 2+ innings against each group.</div>
         <div class="tw"><table id="t-tier-bat"></table></div>
       </div>
       <div class="card span">
-        <h2>Bowling: top-five teams v bottom four</h2>
+        <h2>Bowling: top five v the rest</h2>
         <div class="sub">Each bowler's official spells split the same way — overs, runs, wickets, economy, balls per wicket and best figures against each group. Green economy under 7, red over 8.5. Bowlers with 3+ overs against each group.</div>
         <div class="tw"><table id="t-tier-bowl"></table></div>
       </div>
@@ -2277,7 +2278,7 @@ if(!HAS.table){ hideCard('#t-tier-bat'); hideCard('#t-tier-bowl'); } else {
       {h:'Inn',k:'botinn',r:1},{h:'Runs',k:'botruns',r:1,f:r=>`<b>${r.botruns}</b>`},{h:'Runs/inn',k:'botrpi',r:1,f:r=>r.botrpi.toFixed(0)},{h:'SR',k:'botsr',r:1,f:r=>r.botsr.toFixed(0)},{h:'Best',k:'botbest',r:1},{h:'50s',k:'botf',r:1,f:r=>r.botf||''},
       {h:'Runs/inn gap',k:'gap',r:1,f:r=>`<span style="color:${r.gap>=0?'var(--win)':r.gap<=-8?'var(--loss)':'var(--ink-2)'};font-weight:600">${r.gap>0?'+':''}${r.gap.toFixed(0)}</span>`}];
     table($('#t-tier-bat'),cols,rows,{key:'toprpi'});
-    const thead=$('#t-tier-bat').querySelector('thead');const addGroup=()=>{if(thead.querySelector('.grp'))return;thead.insertAdjacentHTML('afterbegin','<tr class="grp"><th></th><th colspan="6" class="g1">v top five — ${TOPN}</th><th colspan="6" class="g2">v bottom four — ${BOTN}</th><th></th></tr>');};addGroup();
+    const thead=$('#t-tier-bat').querySelector('thead');const addGroup=()=>{if(thead.querySelector('.grp'))return;thead.insertAdjacentHTML('afterbegin',`<tr class="grp"><th></th><th colspan="6" class="g1">v top five — ${TOPN}</th><th colspan="6" class="g2">v the rest — ${BOTN}</th><th></th></tr>`);};addGroup();
     $('#t-tier-bat').addEventListener('click',()=>setTimeout(addGroup,0));
   }
   {
@@ -2290,7 +2291,7 @@ if(!HAS.table){ hideCard('#t-tier-bat'); hideCard('#t-tier-bowl'); } else {
       {h:'Econ gap',k:'gap',r:1,f:r=>`<span style="color:${r.gap<=0.5?'var(--win)':r.gap>=2?'var(--loss)':'var(--ink-2)'};font-weight:600">${r.gap>0?'+':''}${r.gap.toFixed(2)}</span>`}];
     table($('#t-tier-bowl'),cols,rows.map(r=>({...r,topbestw:r.topbest.w,botbestw:r.botbest.w})),{key:'topeco',asc:true});
     // group header row above the columns
-    const thead=$('#t-tier-bowl').querySelector('thead');const addGroup=()=>{if(thead.querySelector('.grp'))return;thead.insertAdjacentHTML('afterbegin','<tr class="grp"><th></th><th colspan="6" class="g1">v top five — ${TOPN}</th><th colspan="6" class="g2">v bottom four — ${BOTN}</th><th></th></tr>');};addGroup();
+    const thead=$('#t-tier-bowl').querySelector('thead');const addGroup=()=>{if(thead.querySelector('.grp'))return;thead.insertAdjacentHTML('afterbegin',`<tr class="grp"><th></th><th colspan="6" class="g1">v top five — ${TOPN}</th><th colspan="6" class="g2">v the rest — ${BOTN}</th><th></th></tr>`);};addGroup();
     $('#t-tier-bowl').addEventListener('click',()=>setTimeout(addGroup,0));
   }
 }
@@ -2343,6 +2344,8 @@ if(!HAS.table){ hideCard('#t-tier-bat'); hideCard('#t-tier-bowl'); } else {
   const everPresent=R.filter(r=>r.m===ms.length).map(r=>r.p);
   const best=R.filter(r=>r.m>=4).sort((a,b)=>b.pct-a.pct)[0];
   if(!HAS.squads){ hideCard('#ga-tiles'); hideCard('#h-squads'); } else {
+  {const sz=ms.map(n=>SQ[n].length),lo=Math.min(...sz),hi=Math.max(...sz);
+   setSub('#h-squads',`Match-day squads for all ${ms.length} played matches (${lo===hi?lo:lo+'–'+hi} per match). A green cell is a win with that player in the side, red a loss; WK marks who kept wicket. Players ordered by matches played.`);}
   $('#ga-tiles').innerHTML=[
     ['Players used',R.length,`across ${ms.length} played matches`],
     ['Squad size',(sizes.reduce((a,b)=>a+b,0)/sizes.length).toFixed(1),`${Math.min(...sizes)}–${Math.max(...sizes)} per match`],
@@ -2352,7 +2355,9 @@ if(!HAS.table){ hideCard('#t-tier-bat'); hideCard('#t-tier-bowl'); } else {
     ['Wicketkeepers',[...new Set(Object.values(KP))].length,Object.entries(R.reduce((a,r)=>(r.wk&&(a[r.p]=r.wk),a),{})).sort((a,b)=>b[1]-a[1]).map(([p,n])=>`${short(p)} ${n}`).join(' · ')],
   ].map(([k,v,d])=>`<div class="tile"><div class="k">${k}</div><div class="v num">${v}</div><div class="d">${d}</div></div>`).join('');
   // squad grid
-  $('#h-squads').innerHTML='<div></div>'+ms.map(n=>`<div class="hh">${ml(n)}<br><span style="font-weight:600;color:${won(n)?'var(--win)':'var(--loss)'}">${won(n)?'W':'L'}</span></div>`).join('')+'<div class="hh" style="text-align:left;padding-left:8px">Record</div>'
+  $('#h-squads').style.setProperty('--cols',ms.length);
+  $('#h-squads').style.minWidth=(196+ms.length*29)+'px';
+  $('#h-squads').innerHTML='<div class="hh corner"></div>'+ms.map(n=>`<div class="hh">${ml(n)}<br><span style="font-weight:600;color:${won(n)?'var(--win)':'var(--loss)'}">${won(n)?'W':'L'}</span></div>`).join('')+'<div class="hh" style="text-align:left;padding-left:8px">Record</div>'
     +R.map(r=>`<div class="hr">${esc(r.p)}</div>`+ms.map(n=>SQ[n].includes(r.p)?`<div class="c ${won(n)?'w':'l'}" title="${esc(r.p)} · Match ${n} v ${esc(M2[n].opp)} · ${M2[n].result}${KP[n]===r.p?' · kept wicket':''}">${KP[n]===r.p?'WK':''}</div>`:`<div class="c o"></div>`).join('')+`<div class="rec"><b>${r.w}–${r.l}</b> · ${r.m} M</div>`).join('')
     +'<div class="hr" style="font-weight:600">Squad size</div>'+ms.map(n=>`<div class="c tot">${SQ[n].length}</div>`).join('')+'<div></div>';
   }
@@ -2511,11 +2516,11 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     }
     if(myO.filter(x=>x.legal).length>=60){const ph=PH.map(([l,f])=>({l,s:myO.filter(f)})).filter(x=>x.s.filter(y=>y.legal).length>=18).map(x=>({l:x.l,e:eco(x.s),w:x.s.filter(bowlerW).length,ov:x.s.filter(y=>y.legal).length/6})).sort((x,y)=>x.e-y.e);if(ph.length>=2)ins.push(`Best used in the <b>${ph[0].l.split(' ')[0].toLowerCase()}</b> (${ph[0].e.toFixed(2)}, ${ph[0].w} wkts in ${ph[0].ov.toFixed(0)} ov); most expensive in the ${ph[ph.length-1].l.split(' ')[0].toLowerCase()} (${ph[ph.length-1].e.toFixed(2)}).`);
       const ww=sp.filter(s=>won(s.n)),ll=sp.filter(s=>!won(s.n));const ovd=o=>{const i=Math.floor(o);return i+Math.round((o-i)*10)/6;};if(ww.length>=2&&ll.length>=2){const ew=ww.reduce((s,x)=>s+x.runs,0)/ww.reduce((s,x)=>s+ovd(x.overs),0),el2=ll.reduce((s,x)=>s+x.runs,0)/ll.reduce((s,x)=>s+ovd(x.overs),0);ins.push(`Economy <b>${ew.toFixed(2)}</b> in wins, <b>${el2.toFixed(2)}</b> in losses.`);}
-      const top=sp.filter(s=>pos[s.opp]<=5),bot=sp.filter(s=>pos[s.opp]>5);if(top.length&&bot.length){const e=(x)=>x.reduce((s,y)=>s+y.runs,0)/x.reduce((s,y)=>s+ovd(y.overs),0);ins.push(`Against the top five: <b>${top.reduce((s,x)=>s+x.w,0)} wkts at ${e(top).toFixed(2)}</b>; against the bottom four: <b>${bot.reduce((s,x)=>s+x.w,0)} wkts at ${e(bot).toFixed(2)}</b>.`);}
+      const top=sp.filter(s=>pos[s.opp]<=5),bot=sp.filter(s=>pos[s.opp]>5);if(top.length&&bot.length){const e=(x)=>x.reduce((s,y)=>s+y.runs,0)/x.reduce((s,y)=>s+ovd(y.overs),0);ins.push(`Against the top five: <b>${top.reduce((s,x)=>s+x.w,0)} wkts at ${e(top).toFixed(2)}</b>; against the rest: <b>${bot.reduce((s,x)=>s+x.w,0)} wkts at ${e(bot).toFixed(2)}</b>.`);}
       const wd=myO.filter(x=>x.et==='wd').reduce((s,x)=>s+x.ev,0),lb=myO.filter(x=>x.legal).length;ins.push(`<b>${wd}</b> wide runs in ${(lb/6).toFixed(1)} overs — ${(6*wd/lb).toFixed(2)} an over${6*wd/lb>1?', above the team rate':''}.`);
       const g={};myO.forEach(x=>(g[x.bt]=g[x.bt]||[]).push(x));const mu=Object.entries(g).filter(([,v])=>balls(v)>=10).map(([bt,v])=>({bt,r:runsOf(v),b:balls(v),o:v.filter(bowlerW).length}));if(mu.length>=2){const worst=mu.slice().sort((x,y)=>y.r/y.b-x.r/x.b)[0],best=mu.slice().sort((x,y)=>x.r/x.b-y.r/y.b)[0];ins.push(`Hit hardest by <b>${esc(worst.bt)}</b> (${worst.r} off ${worst.b}); tightest against <b>${esc(best.bt)}</b> (${best.r} off ${best.b}${best.o?', '+best.o+' out':''}).`);}
     }
-    if(b&&inns.length>=3){const top=inns.filter(i=>pos[M2[i.n].opp]<=5),bot=inns.filter(i=>pos[M2[i.n].opp]>5);if(top.length>=2&&bot.length>=2)ins.push(`Batting v the top five: <b>${top.reduce((s,i)=>s+i.runs,0)} runs in ${top.length}</b> (${(top.reduce((s,i)=>s+i.runs,0)/top.length).toFixed(0)} per innings); v the bottom four: <b>${bot.reduce((s,i)=>s+i.runs,0)} in ${bot.length}</b> (${(bot.reduce((s,i)=>s+i.runs,0)/bot.length).toFixed(0)}).`);}
+    if(b&&inns.length>=3){const top=inns.filter(i=>pos[M2[i.n].opp]<=5),bot=inns.filter(i=>pos[M2[i.n].opp]>5);if(top.length>=2&&bot.length>=2)ins.push(`Batting v the top five: <b>${top.reduce((s,i)=>s+i.runs,0)} runs in ${top.length}</b> (${(top.reduce((s,i)=>s+i.runs,0)/top.length).toFixed(0)} per innings); v the rest: <b>${bot.reduce((s,i)=>s+i.runs,0)} in ${bot.length}</b> (${(bot.reduce((s,i)=>s+i.runs,0)/bot.length).toFixed(0)}).`);}
     const missed=played.filter(n=>!a.includes(n));if(a.length>=4&&missed.length){const mw=missed.filter(won).length;ins.push(`Without ${short(p)} the team was <b>${mw}–${missed.length-mw}</b>; with him <b>${w}–${a.length-w}</b>.`);}
     if(a.length===played.length)ins.push(`<b>Ever-present</b> — in the squad for all ${a.length} played matches.`);
     $('#pl-insights').innerHTML=ins.length?ins.map(x=>`<li class="pl"><span>${x}</span></li>`).join(''):'<li class="pl"><span>Not enough data for insights — fewer than two innings or spells.</span></li>';
