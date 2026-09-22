@@ -1061,6 +1061,7 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
     <div class="tabdesc">Four seasons pooled — 66 matches and 17,161 deliveries. Career records, what the grounds and the toss are actually worth, who the opposition's dangerous players are, and which numbers really separate a win from a loss.</div>
     <div class="tiles" id="at-tiles"></div>
     <div class="grid g2">
+      <div class="card span"><h2>Playoffs — qualified every season</h2><div class="sub" id="at-po-sub"></div><div class="tw"><table id="at-po"></table></div></div>
       <div class="card span"><h2>Career batting</h2><div class="sub">Every player who has batted, all seasons pooled. Strike rate is computed from balls faced in the ball-by-ball, not averaged across seasons.</div><div class="tw"><table id="at-bat"></table></div></div>
       <div class="card span"><h2>Career bowling</h2><div class="sub">Overs, economy and average across every season. Economy is total runs over total overs, correctly weighted.</div><div class="tw"><table id="at-bowl"></table></div></div>
       <div class="card"><h2>Career fielding</h2><div class="sub">Catches, keeping dismissals and run-outs, all seasons.</div><div class="tw"><table id="at-field"></table></div></div>
@@ -2744,7 +2745,43 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     ['Most awards',t4.mom,`${esc(t4.p)} · player of the match`],
     ['Most appearances',t5.m,`${esc(t5.p)}`],
     ['Highest score',bi.runs,`${esc(bi.p)} off ${bi.balls} v ${esc(bi.opp)}, ${bi.y}`],
-  ].map(([k,v,d])=>`<div class="tile"><div class="k">${k}</div><div class="v num">${fmt(v)}</div><div class="d">${d}</div></div>`).join('');
+    ['Playoffs reached',`${Y.filter(y=>SEASONS[y].matches.some(m=>m.stage&&m.stage!=='League')).length} of ${Y.length}`,'every season on record'],
+    ['Titles',Y.filter(y=>SEASONS[y].matches.some(m=>m.stage==='Final'&&m.result==='Won')).length,
+      Y.filter(y=>SEASONS[y].matches.some(m=>m.stage==='Final'&&m.result==='Won')).join(', ')||'—'],
+  ].map(([k,v,d])=>`<div class="tile"><div class="k">${k}</div><div class="v num">${typeof v==='number'?fmt(v):v}</div><div class="d">${d}</div></div>`).join('');
+
+  /* ===== playoffs ===== */
+  {const ORDER=['Eliminator','Qualifier','Semi Final','Final'];
+   const seasons=Y.map(y=>{
+     const po=SEASONS[y].matches.filter(m=>m.stage&&m.stage!=='League')
+       .sort((a,b)=>a.n-b.n);
+     const t=(SEASONS[y].table||[]).find(r=>r.team===RP);
+     const fin=po.find(m=>m.stage==='Final');
+     return {y,po,pos:t?t.pos:null,teams:(SEASONS[y].table||[]).length,
+       w:po.filter(m=>m.result==='Won').length, l:po.filter(m=>m.result==='Lost').length,
+       title:!!(fin&&fin.result==='Won'),
+       out:po.find(m=>m.result==='Lost')||null};});
+   const legW=y=>SEASONS[y].matches.filter(m=>m.stage==='League'&&m.result==='Won').length;
+   const legL=y=>SEASONS[y].matches.filter(m=>m.stage==='League'&&m.result==='Lost').length;
+   const step=m=>{const won=m.result==='Won';
+     return `<span style="white-space:nowrap"><span class="pill ${won?'W':'L'}">${m.stage}</span> `
+       +`${mut((won?'beat ':'lost to ')+esc(shortOpp(m.opp))+(m.margin?' by '+esc(m.margin):''))}</span>`;};
+   tbl('at-po',
+     `<th class="r">Season</th><th class="r">League</th><th class="r">Finish</th><th>Route through the playoffs</th><th class="r">Playoff W–L</th><th>Ended</th>`,
+     seasons.map(s0=>`<tr><td class="r"><b>${s0.y}</b></td><td class="r">${mut(legW(s0.y)+'–'+legL(s0.y))}</td><td class="r">${s0.pos?`#${s0.pos} ${mut('of '+s0.teams)}`:dash}</td>`
+       +`<td>${s0.po.length?s0.po.map(step).join(' <span style="color:var(--muted)">→</span> '):dash}</td>`
+       +`<td class="r"><span style="color:var(--win);font-weight:600">${s0.w}</span>–<span style="color:var(--loss);font-weight:600">${s0.l}</span></td>`
+       +`<td>${s0.title?`<b style="color:var(--gold)">Champions</b>`:s0.out?mut('lost the '+s0.out.stage):dash}</td></tr>`).join(''));
+   const titles=seasons.filter(s0=>s0.title).length;
+   const finals=seasons.filter(s0=>s0.po.some(m=>m.stage==='Final'));
+   const pw=seasons.reduce((a,s0)=>a+s0.w,0), pl=seasons.reduce((a,s0)=>a+s0.l,0);
+   const lostF=finals.filter(f=>!f.title).map(f=>f.y);
+   const early=seasons.filter(s0=>s0.out&&s0.out.stage!=='Final').map(s0=>`${s0.y} in the ${s0.out.stage}`);
+   $('#at-po-sub').innerHTML=`RoyalsPunters have reached the playoffs in <b>all ${Y.length} seasons</b>, never finishing below #${Math.max(...seasons.map(s0=>s0.pos||0))} in the league. `
+     +`<b>${pw}–${pl}</b> across ${pw+pl} playoff matches, with ${finals.length} finals: <b>champions in ${finals.filter(f=>f.title).map(f=>f.y).join(', ')}</b>`
+     +`${lostF.length?`, beaten in the ${lostF.join(' and ')} final`:''}. `
+     +`${early.length?`The other runs ended ${early.join(' and ')}. `:''}`
+     +`Stage names are the league's own, so 2024's third round is recorded as a Semi Final and 2025's second as a Qualifier.`;}
 
   /* ===== career tables ===== */
   const yrsCell=c=>`${c.n} ${mut(c.first===c.last?c.first:c.first+'–'+c.last)}`;
