@@ -1169,10 +1169,14 @@ function hstack(host,rows,colors,{labelW=150,barH=16,gap=8,W=520}={}){
   });
 }
 /* vertical columns: cols=[{lab,val,color,tip}] */
-function vcols(host,cols,{H=220,max,ref,yfmt=v=>fmt(v),W=560,ylab}={}){
+function vcols(host,cols,{H=220,max,step,ref,yfmt=v=>fmt(v),W=560,ylab}={}){
   host.innerHTML='';
   const padL=38,padR=8,padT=10,padB=cols.some(c=>c.lab2)?38:26,x0=padL,x1=W-padR,y0=H-padB,y1=padT;
-  max=max||Math.max(...cols.map(c=>c.val||0));const ticks=niceTicks(max,4);max=ticks[ticks.length-1];
+  max=Math.max(max||0,...cols.map(c=>c.val||0));
+  let ticks;
+  if(step){ticks=[];for(let v=0;v<=max+1e-9;v+=step)ticks.push(+v.toFixed(6));if(ticks[ticks.length-1]<max)ticks.push(+(ticks[ticks.length-1]+step).toFixed(6));}
+  else ticks=niceTicks(max,4);
+  max=ticks[ticks.length-1];
   const s=svgEl(host,W,H);const g=el(s,'g',{class:'grid'});
   ticks.forEach(v=>{const y=y0-(y0-y1)*v/max;el(g,'line',{x1:x0,x2:x1,y1:y,y2:y});el(s,'text',{x:x0-6,y:y+4,'text-anchor':'end',class:'num mut'},yfmt(v));});
   el(s,'line',{x1:x0,x2:x1,y1:y0,y2:y0,class:'axis',stroke:css('--line')});
@@ -1218,7 +1222,8 @@ $('#tiles').innerHTML=[
   const cols=M.map(m=>{const sc=m.rp?parseInt(m.rp):null;const r=resClass(m.result);
     return {lab:label(m),lab2:code(m.opp),val:sc,color:r==='W'?css('--win'):r==='L'?css('--loss'):css('--nr'),
       tip:`<b>Match ${(m.n+(D.lab[m.n]?' · '+(D.lab[m.n]==='E'?'Eliminator':D.lab[m.n]==='Q'?'Qualifier':'Final'):''))} · vs ${esc(m.opp)}</b><br>${m.rp?`RP ${m.rp} (${m.rpov} ov) · ${esc(m.opp)} ${m.opp_score} (${m.oppov} ov)<br>`:''}${m.result}${m.margin?' · '+esc(m.margin):''}${m.potm?`<br>POTM: ${esc(m.potm)}`:''}<br><span style="opacity:.75">${m.ground?esc(m.ground)+' · ':''}${m.date}</span>`};});
-  vcols($('#c-season'),cols,{H:262,max:300,W:1120});
+  const seasonTop=Math.max(...cols.map(c=>c.val||0));
+  vcols($('#c-season'),cols,{H:262,max:300,step:seasonTop>300?150:100,W:1120});
   $('#season-chart-sub').textContent+=' '+[...new Set(M.map(m=>m.opp))].map(o=>`${code(o)} ${o}`).join(' · ')+'.';
 }
 /* findings */
