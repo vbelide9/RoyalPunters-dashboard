@@ -2217,12 +2217,12 @@ if(!HAS.ratings) hideCard('#t-ratings'); else table($('#t-ratings'),[{h:'Player'
     const num=(v,d=0)=>v==null?'—':v.toFixed(d);
     const av=x=>x.outs?(x.runs/x.outs).toFixed(1):(x.balls?'—':'—');
     const gapCell=g=>g==null?'—':`<b style="color:${g>15?'var(--win)':g<-15?'var(--loss)':'var(--muted)'}">${g>0?'+':''}${g.toFixed(0)}</b>`;
-    $('#t-vstype').innerHTML='<thead><tr><th>Batter</th>'
-      +'<th class="r">Balls</th><th class="r">SR</th><th class="r">Avg</th>'
-      +'<th class="r">Balls</th><th class="r">SR</th><th class="r">Avg</th>'
-      +'<th class="r">SR spin − pace</th></tr>'
-      +'<tr><th></th><th class="r" colspan="3" style="color:var(--muted);font-weight:500">vs pace</th>'
-      +'<th class="r" colspan="3" style="color:var(--muted);font-weight:500">vs spin</th><th></th></tr></thead><tbody>'
+    $('#t-vstype').innerHTML='<thead><tr><th rowspan="2">Batter</th>'
+      +'<th class="r" colspan="3" style="border-bottom:1px solid var(--line)">vs Pace</th>'
+      +'<th class="r" colspan="3" style="border-bottom:1px solid var(--line)">vs Spin</th>'
+      +'<th class="r" rowspan="2">SR spin − pace</th></tr>'
+      +'<tr><th class="r">Balls</th><th class="r">SR</th><th class="r">Avg</th>'
+      +'<th class="r">Balls</th><th class="r">SR</th><th class="r">Avg</th></tr></thead><tbody>'
       +rows.map(x=>`<tr><td><b>${esc(x.name)}</b></td>`
         +`<td class="r">${x.P.balls||'—'}</td><td class="r"><b>${num(x.P.sr)}</b></td><td class="r">${av(x.P)}</td>`
         +`<td class="r">${x.S.balls||'—'}</td><td class="r"><b>${num(x.S.sr)}</b></td><td class="r">${av(x.S)}</td>`
@@ -2941,10 +2941,15 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
    const n1=v=>v==null?dash:v.toFixed(1), n0=v=>v==null?dash:v.toFixed(0);
    const gap=(a,b)=>(a==null||b==null)?dash
      :`<b style="color:${b-a>15?'var(--win)':b-a<-15?'var(--loss)':'var(--muted)'}">${b-a>0?'+':''}${(b-a).toFixed(0)}</b>`;
+   /* the three stat columns repeat, so the group row above them says which half is which */
    tbl('at-vstype',
-     `<th>Player</th><th class="r">Balls</th><th class="r">SR</th><th class="r">Avg</th>`
+     `<th rowspan="2">Player</th>`
+     +`<th class="r" colspan="3" style="border-bottom:1px solid var(--line)">vs Pace</th>`
+     +`<th class="r" colspan="3" style="border-bottom:1px solid var(--line)">vs Spin</th>`
+     +`<th class="r" rowspan="2">SR spin − pace</th><th class="r" rowspan="2">Avg spin − pace</th>`
+     +`</tr><tr>`
      +`<th class="r">Balls</th><th class="r">SR</th><th class="r">Avg</th>`
-     +`<th class="r">SR spin − pace</th><th class="r">Avg spin − pace</th>`,
+     +`<th class="r">Balls</th><th class="r">SR</th><th class="r">Avg</th>`,
      rows.length?rows.map(x=>`<tr><td><b>${esc(x.p)}</b></td>`
        +`<td class="r">${x.Pace.balls}</td><td class="r"><b>${n0(x.psr)}</b></td><td class="r">${n1(x.pav)}</td>`
        +`<td class="r">${x.Spin.balls}</td><td class="r"><b>${n0(x.ssr)}</b></td><td class="r">${n1(x.sav)}</td>`
