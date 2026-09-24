@@ -132,7 +132,8 @@ table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--line-soft);white-space:nowrap}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
 th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
-th[data-sort]:after{content:"";display:inline-block;width:0;height:0;margin-left:5px;border:4px solid transparent;vertical-align:middle}
+th[data-sort]:after,th[data-sortcol]:after{content:"";display:inline-block;width:0;height:0;margin-left:5px;border:4px solid transparent;vertical-align:middle}
+th.nosort{cursor:default}
 th.asc:after{border-bottom-color:var(--accent);margin-bottom:4px}
 th.desc:after{border-top-color:var(--accent);margin-top:4px}
 tr.me td{background:var(--accent-soft);font-weight:600}
@@ -3210,6 +3211,110 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
      rows.map(x=>`<tr><td><b>${esc(x.p)}</b></td><td>${goal(x.runs,x.nr,x.gr,'runs')}</td><td>${goal(x.w,x.nw,x.gw,'wickets')}</td><td>${goal(x.dis,x.nd,x.gd,'dismissals')}</td></tr>`).join(''));
    const soon=rows.filter(x=>x.gr!=null&&x.gr<=100).slice(0,3);
    $('#at-miles-sub').innerHTML=`Career totals for the ${rows.length} players in the ${CUR} squad, against club milestones. ${soon.length?`Closest: ${soon.map(x=>`<b>${esc(x.p)}</b> needs ${x.gr} for ${fmt(x.nr)}`).join(', ')}.`:''}`;}
+}
+
+/* ---------- sorting for the statically built tables ----------
+   table() already sorts the tables it renders. Everything built with tbl() is plain
+   markup, so the sort is retrofitted onto the DOM: click a column to sort by it, click
+   again to reverse, a third time to return to the order the page built. Values are read
+   from the cells, so a column of "18 36%" sorts on the 18 and a column of names sorts
+   alphabetically. Rows are moved, never re-rendered, so any handler on a row survives. */
+{
+  const clean = s => String(s ?? '').replace(/[−–]/g, '-').replace(/[,  ]/g, '').trim();
+  // a leading # is a rank marker, not text: "#2 · #9 overall" sorts on the 2
+  const lead  = s => {const m = clean(s).replace(/^#/, '').match(/^[-+]?\d*\.?\d+/); return m ? parseFloat(m[0]) : null;};
+  const txt   = td => (td.innerText || td.textContent || '').trim();
+  const blank = t => !t || t === '—';
+
+  function headerGrid(thead){
+    const g = [];
+    [...thead.rows].forEach((tr, r) => {
+      g[r] = g[r] || []; let c = 0;
+      [...tr.cells].forEach(th => {
+        while (g[r][c]) c++;
+        const rs = th.rowSpan || 1, cs = th.colSpan || 1;
+        for (let i = 0; i < rs; i++){ g[r + i] = g[r + i] || []; for (let j = 0; j < cs; j++) g[r + i][c + j] = th; }
+        c += cs;
+      });
+    });
+    return g;
+  }
+
+  function sortable(t){
+    if (!t.tHead || !t.tBodies[0] || t.dataset.sortable === '1') return;
+    if (t.tHead.querySelector('th[data-sort]')) return;          // table() handles its own
+    const body = t.tBodies[0];
+    const all = [...body.rows];
+    // totals, "show all" and empty-state rows are not data and stay where they are
+    const pinned = all.filter(r => r.classList.contains('tot') || r.classList.contains('morerow')
+                                || [...r.cells].some(c => c.colSpan > 1));
+    const rows = all.filter(r => !pinned.includes(r));
+    if (rows.length < 2) return;
+    rows.forEach((r, i) => r._i = i);
+
+    const grid = headerGrid(t.tHead), leaf = grid[grid.length - 1] || [];
+    let active = null, dir = 0;
+    // decided once per column, over the cells that hold a value: an em dash is not a word
+    const numCache = new Map();
+    const numeric = c => {
+      if (!numCache.has(c)){
+        const vals = rows.map(x => x.cells[c] ? txt(x.cells[c]) : '').filter(v => !blank(v));
+        numCache.set(c, vals.length > 0 && vals.filter(v => lead(v) != null).length >= 0.6 * vals.length);
+      }
+      return numCache.get(c);
+    };
+
+    const apply = () => {
+      const r = rows.slice();
+      if (active != null){
+        const num = numeric(active);
+        r.sort((a, b) => {
+          const A = a.cells[active], B = b.cells[active];
+          const at = A ? txt(A) : '', bt = B ? txt(B) : '';
+          // a missing value sorts last whichever way the column is pointing
+          if (blank(at) || blank(bt)) return blank(at) && blank(bt) ? a._i - b._i : (blank(at) ? 1 : -1);
+          let d;
+          if (num){ const x = lead(at), y = lead(bt); d = (x == null ? 0 : x) - (y == null ? 0 : y); }
+          else d = at.localeCompare(bt, undefined, {numeric: true});
+          return (d || 0) * dir || a._i - b._i;
+        });
+      } else r.sort((a, b) => a._i - b._i);
+      r.forEach(x => body.appendChild(x));
+      pinned.forEach(x => body.appendChild(x));
+      t.tHead.querySelectorAll('th').forEach(th => {
+        th.classList.remove('asc', 'desc'); th.removeAttribute('aria-sort');
+      });
+      if (active != null && leaf[active]){
+        leaf[active].classList.add(dir > 0 ? 'asc' : 'desc');
+        leaf[active].setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending');
+      }
+    };
+
+    const seen = new Set();
+    leaf.forEach((th, c) => {
+      if (!th || th.colSpan > 1 || seen.has(th)) return;
+      seen.add(th);
+      th.dataset.sortcol = c;
+      th.setAttribute('role', 'button'); th.tabIndex = 0;
+      const hit = () => {
+        // a fresh column opens on its most useful end: biggest first for numbers, A-Z for names
+        const opened = numeric(c) ? -1 : 1;
+        if (active !== c){ active = c; dir = opened; }
+        else if (dir === opened) dir = -dir;
+        else { active = null; dir = 0; }
+        apply();
+      };
+      th.addEventListener('click', hit);
+      th.addEventListener('keydown', e => {if (e.key === 'Enter' || e.key === ' '){e.preventDefault(); hit();}});
+    });
+    // group headers above a span are labels, not controls
+    grid.slice(0, -1).forEach(row => new Set(row).forEach(th => {
+      if (th && th.colSpan > 1) th.classList.add('nosort');
+    }));
+    t.dataset.sortable = '1';
+  }
+
+  document.querySelectorAll('table').forEach(sortable);
 }
 
 /* ---------- sub-navigation, player search ---------- */
