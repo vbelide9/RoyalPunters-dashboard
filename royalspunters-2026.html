@@ -1244,7 +1244,8 @@ function show(p){tabs.forEach(t=>t.setAttribute('aria-selected',t.dataset.p===p)
   const across=CROSS_SEASON.has(p);
   $('#mast-title').textContent=across?'RoyalsPunters':window.MAST_SEASON;
   $('#mast-sub').textContent=across?`PCL T25 · Elite Division · Pittsburgh Cricket League · ${YEARS[0]}\u2013${YEARS[YEARS.length-1]}`:window.MAST_SEASON_SUB;
-  const pick=document.querySelector('.season-pick');if(pick)pick.style.visibility=across?'hidden':'';}
+  const pick=document.querySelector('.season-pick');if(pick)pick.style.visibility=across?'hidden':'';
+  window.CURRENT_TAB=p; if(window.applyRecord)window.applyRecord(p);}
 tabs.forEach(t=>t.addEventListener('click',()=>{show(t.dataset.p);window.scrollTo({top:0,behavior:'auto'});}));
 let t0='season';try{t0=localStorage.getItem('rp-tab')||t0}catch(e){}
 if(!tabs.some(t=>t.dataset.p===t0))t0='season';
@@ -1341,6 +1342,16 @@ const me=D.table.find(t=>t.team==='RoyalsPunters')
 const ord=n=>n+(n===1?'st':n===2?'nd':n===3?'rd':'th');
 $('#record').innerHTML=`<div><div class="v">${me.m}</div><div class="k">Played</div></div><div><div class="v w">${me.w}</div><div class="k">Won</div></div><div><div class="v l">${me.l}</div><div class="k">Lost</div></div><div><div class="v">${me.nr}</div><div class="k">No result</div></div>`
   +(me.pts!=null?`<div><div class="v">${me.pts}</div><div class="k">Points</div></div>`:'');
+/* the same masthead figures across every season, for the tabs that span them */
+{const cell=(v,k,c)=>`<div><div class="v${c?' '+c:''}">${v}</div><div class="k">${k}</div></div>`;
+ const all=YEARS.reduce((a,y)=>{(SEASONS[y].matches||[]).forEach(m=>{
+   a.m++; if(m.result==='Won')a.w++; else if(m.result==='Lost')a.l++; else a.nr++;});return a;},{m:0,w:0,l:0,nr:0});
+ window.REC_SEASON=$('#record').innerHTML;
+ window.REC_ALL=cell(all.m,'Played')+cell(all.w,'Won','w')+cell(all.l,'Lost','l')
+   +(all.nr?cell(all.nr,'No result'):'')+cell(YEARS.length,'Seasons');
+ window.applyRecord=p=>{$('#record').innerHTML=CROSS_SEASON.has(p)?window.REC_ALL:window.REC_SEASON;};
+ applyRecord(window.CURRENT_TAB||'season');}
+
 const runsFor=D.batting.reduce((a,b)=>a+b.runs,0);
 const totW=D.bowling.reduce((a,b)=>a+b.w,0);
 const tb=D.teambowl.filter(t=>t.runs!=null);
