@@ -166,6 +166,12 @@ tr.click:hover td{background:var(--surface-2)}
   @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 }
 .note{font-size:12px;color:var(--muted);margin-top:10px}
+details.fine{margin-top:9px}
+details.fine>summary{cursor:pointer;list-style:none;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+details.fine>summary::-webkit-details-marker{display:none}
+details.fine>summary:before{content:"\203A";display:inline-block;transition:transform .15s}
+details.fine[open]>summary:before{transform:rotate(90deg)}
+details.fine .note{margin-top:7px;max-width:74ch;line-height:1.5}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .ctl select,.ctl button.f{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-size:13px;color:var(--ink)}
 .ctl button.f[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -1077,7 +1083,10 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
     <div class="tiles" id="at-tiles"></div>
     <div class="grid g2">
       <div class="card span"><h2>Playoffs — qualified every season</h2><div class="sub" id="at-po-sub"></div><div class="tw"><table id="at-po"></table></div></div>
-      <div class="card span"><h2>League honours — RoyalsPunters in the league top tens</h2><div class="sub" id="at-mvp-sub"></div><div class="tw"><table id="at-mvp"></table></div><h2 style="margin-top:18px">Top-ten placings per player</h2><div class="sub" id="at-mvpc-sub"></div><div class="tw"><table id="at-mvpc"></table></div></div>
+      <div class="card span"><h2>League honours — RoyalsPunters in the league top tens</h2><div class="sub" id="at-mvp-sub"></div><div class="tw"><table id="at-mvp"></table></div>
+        <details class="fine"><summary>How these are counted</summary><div class="note" id="at-mvp-fine"></div></details>
+        <h2 style="margin-top:18px">Top-ten placings per player</h2><div class="sub" id="at-mvpc-sub"></div><div class="tw"><table id="at-mvpc"></table></div>
+        <details class="fine"><summary>How these are counted</summary><div class="note" id="at-mvpc-fine"></div></details></div>
       <div class="card span"><h2>Wickets by batting position — all four seasons</h2><div class="sub" id="at-wkpos-sub"></div><div class="tw"><table id="at-wkpos"></table></div></div>
       <div class="card span"><h2>Against pace and against spin — all four seasons</h2><div class="sub" id="at-vstype-sub"></div><div class="tw"><table id="at-vstype"></table></div></div>
       <div class="card span"><h2>Career batting</h2><div class="sub">Every player who has batted, all seasons pooled. Strike rate is computed from balls faced in the ball-by-ball, not averaged across seasons.</div><div class="tw"><table id="at-bat"></table></div></div>
@@ -2901,19 +2910,21 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
       :`<tr><td colspan="7">${mut('No league top-ten tables supplied yet.')}</td></tr>`);
    const missing=Y.filter(y=>!have.includes(y));
    const firsts=rows.filter(r=>r.rank===1);
-   $('#at-mvp-sub').innerHTML=`Where RoyalsPunters players placed in the league's own top tens, league stage and `
-     +`playoffs kept separate because the league ranks them separately. `
-     +`${firsts.length?`League leader: ${firsts.map(r=>`<b>${esc(r.p)}</b> (${r.cat}, ${r.stLab.toLowerCase()}, ${r.y})`).join(', ')}. `:''}`
-     +`The league's tables pool every group, so ranks here are <b>within RoyalsPunters' own pool</b> — Group A in `
-     +`2023 and 2024, the Elite Division in 2025 — with the pooled position shown alongside where it differs. That `
-     +`re-ranking is sound because anyone from that pool missing from the pooled ten must sit below everyone in it. `
-     +`Playoff rows are capped at the top five, so placings below that are not shown here even though the full tables `
-     +`are kept in the workbook. `
-     +`Players are included when the league credited them to RoyalsPunters <i>or</i> when they turned out for us that `
+   $('#at-mvp-sub').innerHTML=`Where our players placed in the league's own top tens. Ranks are <b>within our own `
+     +`pool</b> — Group A in 2023 and 2024, the Elite Division since — with the league's pooled position alongside `
+     +`where it differs. `
+     +`${firsts.length?`<b>${firsts.length}</b> of them are first places — the gold ranks below.`:''}`;
+   $('#at-mvp-fine').innerHTML=`${firsts.length?`Topped the league in: `
+     +`${firsts.map(r=>`<b>${esc(r.p)}</b> (${r.cat.toLowerCase()}, ${r.stLab.toLowerCase()}, ${r.y})`).join(', ')}. `:''}`
+     +`League stage and playoffs are kept separate because the league ranks them separately, `
+     +`and playoff rows are capped at the top five — lower placings are in the workbook but not here. `
+     +`Re-ranking to our own pool is sound because anyone from that pool missing from the league's pooled ten must `
+     +`sit below everyone in it. `
+     +`A player is included when the league credited them to RoyalsPunters <i>or</i> when they turned out for us that `
      +`season, because registration and appearances diverge: Chetan Rajput moved from Pittspunters to RoyalsPunters `
      +`mid-2023 and the league credits him to Pittspunters in the league stage yet to us in the playoffs, while `
-     +`Iknoor Singh is credited to us throughout although his 414 league-stage runs were not scored for us. `
-     +`The league's own label is shown in every row. `
+     +`Iknoor Singh is credited to us throughout although his 414 league-stage runs were not scored for us. The `
+     +`league's own label is shown in every row, under "Credited to". `
      +`${missing.length?`Not yet supplied for ${missing.join(', ')}.`:''}`;
 
    /* the same rows counted per player, so a career of placings reads at a glance */
@@ -2935,12 +2946,14 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
        +`<td>${CORD.filter(c=>a.cats.has(c)).join(' · ')}</td>`
        +`<td>${bestCell(a.best)}</td></tr>`).join('')
       :`<tr><td colspan="7">${mut('No league top-ten tables supplied yet.')}</td></tr>`);
-   $('#at-mvpc-sub').innerHTML=`The rows above counted per player: <b>${rows.length}</b> placings across <b>${tally.length}</b> players`
-     +`${have.length?` in ${have.length===Y.length?'all four seasons':have.slice().sort().join(', ')}`:''}. `
-     +`A player scores one placing per table they appear in, so a season can yield several. Ranks are the same `
-     +`in-pool ranks, under the same cap of ten league-stage and five playoff places, and the same inclusion rule — `
-     +`so ${rows.filter(r=>!r.labelled).length} of the ${rows.length} placings were credited by the league to `
-     +`another team and are counted here because the player turned out for us that season.`;}
+   $('#at-mvpc-sub').innerHTML=`The rows above counted per player: <b>${rows.length}</b> placings across `
+     +`<b>${tally.length}</b> players`
+     +`${have.length?` in ${have.length===Y.length?'all four seasons':have.slice().sort().join(', ')}`:''}.`;
+   $('#at-mvpc-fine').innerHTML=`A player scores one placing per table they appear in, so a single season can yield `
+     +`several. Ranks, caps and the inclusion rule are exactly those of the table above — which is why `
+     +`${rows.filter(r=>!r.labelled).length} of the ${rows.length} placings were credited by the league to another `
+     +`team and are counted here because the player turned out for us that season. "As leader" counts first places; `
+     +`"Best placing" is the highest rank reached, the more recent season winning a tie.`;}
 
   /* ===== batting against pace and against spin, pooled ===== */
   {const g={};
