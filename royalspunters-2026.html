@@ -1232,12 +1232,19 @@ const short = p => {const w=p.split(' ');return FIRSTS[w[0]]>1&&w.length>1?w.sli
   const sel=$('#season-select');sel.innerHTML=YEARS.map(y=>`<option value="${y}" ${y===SEASON?'selected':''}>${y}</option>`).join('');
   sel.addEventListener('change',()=>{try{localStorage.setItem('rp-season',sel.value)}catch(e){}location.hash='season='+sel.value;location.reload();});
   $('#mast-title').textContent=`RoyalsPunters ${SEASON}`;
+  window.MAST_SEASON=`RoyalsPunters ${SEASON}`;
   const league=D.matches.filter(m=>m.stage==='League').length,po=D.matches.filter(m=>m.stage!=='League').map(m=>m.stage);
   $('#mast-sub').textContent=`PCL T25 · Elite Division · Pittsburgh Cricket League · ${league} league fixtures${po.length?' + '+po.join(' + '):''}`;
+  window.MAST_SEASON_SUB=$('#mast-sub').textContent;
 }
 /* ---------- tabs ---------- */
 const tabs=[...document.querySelectorAll('.tab')];
-function show(p){tabs.forEach(t=>t.setAttribute('aria-selected',t.dataset.p===p));document.querySelectorAll('.panel').forEach(s=>s.hidden=s.id!=='p-'+p);try{localStorage.setItem('rp-tab',p)}catch(e){}}
+const CROSS_SEASON=new Set(['yoy','alltime','ask']);
+function show(p){tabs.forEach(t=>t.setAttribute('aria-selected',t.dataset.p===p));document.querySelectorAll('.panel').forEach(s=>s.hidden=s.id!=='p-'+p);try{localStorage.setItem('rp-tab',p)}catch(e){}
+  const across=CROSS_SEASON.has(p);
+  $('#mast-title').textContent=across?'RoyalsPunters':window.MAST_SEASON;
+  $('#mast-sub').textContent=across?`PCL T25 · Elite Division · Pittsburgh Cricket League · ${YEARS[0]}\u2013${YEARS[YEARS.length-1]}`:window.MAST_SEASON_SUB;
+  const pick=document.querySelector('.season-pick');if(pick)pick.style.visibility=across?'hidden':'';}
 tabs.forEach(t=>t.addEventListener('click',()=>{show(t.dataset.p);window.scrollTo({top:0,behavior:'auto'});}));
 let t0='season';try{t0=localStorage.getItem('rp-tab')||t0}catch(e){}
 if(!tabs.some(t=>t.dataset.p===t0))t0='season';
