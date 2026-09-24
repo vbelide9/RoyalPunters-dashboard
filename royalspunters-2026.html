@@ -1062,7 +1062,7 @@ h4.mini{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.0
     <div class="tiles" id="at-tiles"></div>
     <div class="grid g2">
       <div class="card span"><h2>Playoffs — qualified every season</h2><div class="sub" id="at-po-sub"></div><div class="tw"><table id="at-po"></table></div></div>
-      <div class="card span"><h2>League honours — RoyalsPunters in the league top tens</h2><div class="sub" id="at-mvp-sub"></div><div class="tw"><table id="at-mvp"></table></div></div>
+      <div class="card span"><h2>League honours — RoyalsPunters in the league top tens</h2><div class="sub" id="at-mvp-sub"></div><div class="tw"><table id="at-mvp"></table></div><h2 style="margin-top:18px">Top-ten placings per player</h2><div class="sub" id="at-mvpc-sub"></div><div class="tw"><table id="at-mvpc"></table></div></div>
       <div class="card span"><h2>Career batting</h2><div class="sub">Every player who has batted, all seasons pooled. Strike rate is computed from balls faced in the ball-by-ball, not averaged across seasons.</div><div class="tw"><table id="at-bat"></table></div></div>
       <div class="card span"><h2>Career bowling</h2><div class="sub">Overs, economy and average across every season. Economy is total runs over total overs, correctly weighted.</div><div class="tw"><table id="at-bowl"></table></div></div>
       <div class="card"><h2>Career fielding</h2><div class="sub">Catches, keeping dismissals and run-outs, all seasons.</div><div class="tw"><table id="at-field"></table></div></div>
@@ -2834,7 +2834,33 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
      +`mid-2023 and the league credits him to Pittspunters in the league stage yet to us in the playoffs, while `
      +`Iknoor Singh is credited to us throughout although his 414 league-stage runs were not scored for us. `
      +`The league's own label is shown in every row. `
-     +`${missing.length?`Not yet supplied for ${missing.join(', ')}.`:''}`;}
+     +`${missing.length?`Not yet supplied for ${missing.join(', ')}.`:''}`;
+
+   /* the same rows counted per player, so a career of placings reads at a glance */
+   const CORD=CAT.map(([,lab])=>lab);
+   const agg={};
+   rows.forEach(r=>{const a=agg[r.p]=agg[r.p]||{p:r.p,n:0,ones:0,t3:0,ys:new Set(),cats:new Set(),best:null,other:0};
+     a.n++; if(r.rank===1)a.ones++; if(r.rank<=3)a.t3++; a.ys.add(r.y); a.cats.add(r.cat);
+     if(!r.labelled)a.other++;
+     if(!a.best||r.rank<a.best.rank)a.best=r;});
+   const tally=Object.values(agg).sort((a,b)=>b.n-a.n||b.ones-a.ones||a.best.rank-b.best.rank||a.p.localeCompare(b.p));
+   const bestCell=r=>`<b style="color:${medal(r.rank)}">#${r.rank}</b> ${mut(r.cat.toLowerCase()+', '+r.y+' '+r.stLab.toLowerCase())}`;
+   tbl('at-mvpc',
+     `<th>Player</th><th class="r">Placings</th><th class="r">As leader</th><th class="r">Top 3</th><th class="r">Seasons</th><th>Categories</th><th>Best placing</th>`,
+     tally.length?tally.map(a=>`<tr><td><b>${esc(a.p)}</b></td>`
+       +`<td class="r"><b>${a.n}</b></td>`
+       +`<td class="r">${a.ones?`<b style="color:var(--gold)">${a.ones}</b>`:dash}</td>`
+       +`<td class="r">${a.t3||dash}</td>`
+       +`<td class="r">${[...a.ys].sort().join(', ')}</td>`
+       +`<td>${CORD.filter(c=>a.cats.has(c)).join(' · ')}</td>`
+       +`<td>${bestCell(a.best)}</td></tr>`).join('')
+      :`<tr><td colspan="7">${mut('No league top-ten tables supplied yet.')}</td></tr>`);
+   $('#at-mvpc-sub').innerHTML=`The rows above counted per player: <b>${rows.length}</b> placings across <b>${tally.length}</b> players`
+     +`${have.length?` in ${have.length===Y.length?'all four seasons':have.slice().sort().join(', ')}`:''}. `
+     +`A player scores one placing per table they appear in, so a season can yield several. Ranks are the same `
+     +`in-pool ranks, under the same cap of ten league-stage and five playoff places, and the same inclusion rule — `
+     +`so ${rows.filter(r=>!r.labelled).length} of the ${rows.length} placings were credited by the league to `
+     +`another team and are counted here because the player turned out for us that season.`;}
 
   /* ===== career tables ===== */
   const yrsCell=c=>`${c.n} ${mut(c.first===c.last?c.first:c.first+'–'+c.last)}`;
