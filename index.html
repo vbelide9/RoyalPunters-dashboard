@@ -1468,9 +1468,13 @@ $('#tiles').innerHTML=[
 
 /* ---------- season chart ---------- */
 {
-  const cols=M.map(m=>{const sc=m.rp?parseInt(m.rp):null;const r=resClass(m.result);
-    return {lab:label(m),lab2:code(m.opp),val:sc,color:r==='W'?css('--win'):r==='L'?css('--loss'):css('--nr'),
-      tip:`<b>Match ${(m.n+(D.lab[m.n]?' · '+(D.lab[m.n]==='E'?'Eliminator':D.lab[m.n]==='Q'?'Qualifier':'Final'):''))} · vs ${esc(m.opp)}</b><br>${m.rp?`RP ${m.rp} (${m.rpov} ov) · ${esc(m.opp)} ${m.opp_score} (${m.oppov} ov)<br>`:''}${m.result}${m.margin?' · '+esc(m.margin):''}${m.potm?`<br>POTM: ${esc(m.potm)}`:''}<br><span style="opacity:.75">${m.ground?esc(m.ground)+' · ':''}${m.date}</span>`};});
+  const yearSlots={};M.forEach((m,i)=>{if(m.y)(yearSlots[m.y]=yearSlots[m.y]||[]).push(i);});
+  const yearLabels=new Map(Object.entries(yearSlots).map(([year,slots])=>[slots[Math.floor(slots.length/2)],year]));
+  const cols=M.map((m,i)=>{const sc=m.rp?parseInt(m.rp):null;const r=resClass(m.result);
+    const stage=m.stage&&m.stage!=='League'?` · ${esc(m.stage)}`:'';
+    const match=SEASON==='all'?`${m.y} M${m.n0||m.n}`:`M${m.n}`;
+    return {lab:SEASON==='all'?'':label(m),lab2:SEASON==='all'?(yearLabels.get(i)||''):code(m.opp),val:sc,color:r==='W'?css('--win'):r==='L'?css('--loss'):css('--nr'),
+      tip:`<b>${match}${stage} · vs ${esc(m.opp)}</b><br>${m.rp?`RP ${m.rp} (${m.rpov} ov) · ${esc(m.opp)} ${m.opp_score} (${m.oppov} ov)<br>`:''}${m.result}${m.margin?' · '+esc(m.margin):''}${m.potm?`<br>POTM: ${esc(m.potm)}`:''}<br><span style="opacity:.75">${m.ground?esc(m.ground)+' · ':''}${m.date}</span>`};});
   const seasonTop=Math.max(...cols.map(c=>c.val||0));
   vcols($('#c-season'),cols,{H:262,max:300,step:seasonTop>300?150:100,W:1120});
   $('#season-chart-sub').textContent+=' '+[...new Set(M.map(m=>m.opp))].map(o=>`${code(o)} ${o}`).join(' · ')+'.';
