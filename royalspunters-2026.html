@@ -2842,13 +2842,20 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     const app={};Object.values(o.squads).forEach(ps=>ps.forEach(p=>app[p]=(app[p]||0)+1));
     o.players=[...new Set([...o.batting.map(b=>b.p),...o.bowling.map(b=>b.p)])].sort((x,y)=>(app[y]||0)-(app[x]||0)||x.localeCompare(y));
     return o;})();
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dt=n=>{const d=(M2[n]||{}).date||'';const m=/^\d{4}-(\d\d)-(\d\d)/.exec(d);return m?`${+m[2]} ${MON[+m[1]-1]}`:'';};
   let MODE='season',DD,M2,ml,inX,BAT,BOWL,SQ,KP,played,posOf,bat,bowl,fld,rat,potm,order,PL;
   const useMode=mode=>{MODE=mode;DD=mode==='all'?ALLD:D;
     M2=Object.fromEntries(DD.matches.map(m=>[m.n,m]));
     BAT=unpack(DD.bat);BOWL=unpack(DD.bowl);
     SQ=Object.fromEntries(Object.entries(DD.squads||{}).map(([m,ps])=>[+m,ps]));KP=Object.fromEntries(Object.entries(DD.keepers||{}).map(([m,p])=>[+m,p]));
-    if(mode==='all'){ml=n=>DD.lab[n];played=Object.keys(SQ).map(Number).sort((a,b)=>a-b);inX=(p,n)=>(SQ[n]||[]).includes(p);posOf=n=>DD.posBy[n];PL=ALLD.players;}
-    else{ml=n=>`M${LB(n)}`;played=HAS.squads?Object.keys(SQ).map(Number).sort((a,b)=>a-b):D.matches.filter(m=>m.rp).map(m=>m.n);inX=inXI;
+    {const STG={Eliminator:'Elim',Qualifier:'Qual','Semi Final':'SF',Final:'Final'},seen={},L={};
+     DD.matches.forEach(m=>{const k=(m.y||SEASON)+'|'+m.opp;seen[k]=(seen[k]||0)+1;});
+     DD.matches.forEach(m=>{const st=STG[m.stage]||'',yy=mode==='all'?` ’${String(m.y).slice(2)}`:'';
+       L[m.n]=`${code(m.opp)}${st?' '+st:''}${yy}${seen[(m.y||SEASON)+'|'+m.opp]>1&&!st?` (${dt(m.n)})`:''}`;});
+     ml=n=>L[n]||'';}
+    if(mode==='all'){played=Object.keys(SQ).map(Number).sort((a,b)=>a-b);inX=(p,n)=>(SQ[n]||[]).includes(p);posOf=n=>DD.posBy[n];PL=ALLD.players;}
+    else{played=HAS.squads?Object.keys(SQ).map(Number).sort((a,b)=>a-b):D.matches.filter(m=>m.rp).map(m=>m.n);inX=inXI;
       const pos=Object.fromEntries((D.table||[]).map(t=>[t.team,t.pos]));posOf=n=>pos[M2[n].opp];PL=PLAYERS;}
     bat=Object.fromEntries(DD.batting.map(b=>[b.p,b]));bowl=Object.fromEntries(DD.bowling.map(b=>[b.p,b]));
     fld=Object.fromEntries((DD.fielding||[]).map(f=>[f.p,f]));rat=Object.fromEntries((DD.ratings||[]).map((r,i)=>[r.p,{...r,rank:i+1}]));
@@ -2877,7 +2884,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
       bw.push(['Average',bo.w?(bo.runs/bo.w).toFixed(1):'—','runs per wicket']);
       bw.push(['Strike rate',bo.w?(ob/bo.w).toFixed(1):'—','balls per wicket']);
       bw.push(['Dot-ball %',(+bo.dotpct).toFixed(0)+'%',`${bo.dots} dot balls`]);
-      bw.push(['Best spell',best?`${best.w}/${best.runs}`:'—',`${best?ml(best.n)+' · ':''}${hauls} three-wicket spell${hauls===1?'':'s'}`]);
+      bw.push(['Best spell',best?`${best.w}/${best.runs}`:'—',`${best?'v '+ml(best.n)+' · ':''}${hauls} three-wicket spell${hauls===1?'':'s'}`]);
       if(lb){const f4=myO.filter(x=>x.runs===4).length,f6=myO.filter(x=>x.runs===6).length;
         const wd=myO.filter(x=>x.et==='wd').length,nb=myO.filter(x=>x.et==='nb').length;
         bw.push(['Balls per boundary',f4+f6?(lb/(f4+f6)).toFixed(1):'—',`${f4} fours · ${f6} sixes conceded`]);
@@ -2887,8 +2894,8 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     $('#pl-tilerows').innerHTML=rowsT.map(([c,t])=>`<div class="tilecap">${c}</div><div class="tiles">${t.map(tile).join('')}</div>`).join('');
     // insights
     const ins=[];
-    const bi=inns.slice().sort((x,y)=>y.runs-x.runs||x.balls-y.balls)[0];if(bi&&bi.runs>=20)ins.push(`Best innings <b>${bi.runs} (${bi.balls})</b> in ${ml(bi.n)} v ${code(M2[bi.n].opp)} — ${M2[bi.n].result.toLowerCase()}.`);
-    const bs=sp.slice().sort((x,y)=>y.w-x.w||x.runs-y.runs)[0];if(bs&&bs.w>=2)ins.push(`Best spell <b>${bs.w}/${bs.runs}</b> (${bs.overs} ov) in ${ml(bs.n)} v ${code(bs.opp)}.`);
+    const bi=inns.slice().sort((x,y)=>y.runs-x.runs||x.balls-y.balls)[0];if(bi&&bi.runs>=20)ins.push(`Best innings <b>${bi.runs} (${bi.balls})</b> v ${ml(bi.n)} — ${M2[bi.n].result.toLowerCase()}.`);
+    const bs=sp.slice().sort((x,y)=>y.w-x.w||x.runs-y.runs)[0];if(bs&&bs.w>=2)ins.push(`Best spell <b>${bs.w}/${bs.runs}</b> (${bs.overs} ov) v ${ml(bs.n)}.`);
     if(inns.length>=4){const wr=inns.filter(i=>won(i.n)),lr=inns.filter(i=>!won(i.n));if(wr.length&&lr.length){const aw=wr.reduce((s,i)=>s+i.runs,0)/wr.length,al=lr.reduce((s,i)=>s+i.runs,0)/lr.length;ins.push(`Averages <b>${aw.toFixed(0)}</b> runs per innings in wins and <b>${al.toFixed(0)}</b> in losses.`);}
       const th=[50,40,30,20].find(t=>inns.filter(i=>i.runs>=t).length>=2);if(th){const s=inns.filter(i=>i.runs>=th);const ww=s.filter(i=>won(i.n)).length;ins.push(`When ${short(p)} scores ${th}+, RoyalsPunters are <b>${ww}–${s.length-ww}</b>.`);}
       const posc={};inns.forEach(i=>{const k=order[i.n].indexOf(p)+1;if(k){(posc[k]=posc[k]||[]).push(i.runs);}});const pe=Object.entries(posc).filter(([,v])=>v.length>=2).map(([k,v])=>({k:+k,n:v.length,rpi:v.reduce((s,x)=>s+x,0)/v.length})).sort((x,y)=>y.rpi-x.rpi);if(pe.length>=2)ins.push(`Most productive at <b>${ord(pe[0].k)}</b> (${pe[0].rpi.toFixed(0)} runs per innings over ${pe[0].n}); least at ${ord(pe[pe.length-1].k)} (${pe[pe.length-1].rpi.toFixed(0)}).`);}
@@ -2910,7 +2917,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     $('#pl-insights').innerHTML=ins.length?ins.map(x=>`<li class="pl"><span>${x}</span></li>`).join(''):'<li class="pl"><span>Not enough data for insights — fewer than two innings or spells.</span></li>';
     // form chart: runs bars + wickets dots per match
     {const host=$('#pl-form');host.innerHTML='';const rows=a.map(n=>({n,runs:inns.filter(i=>i.n===n).reduce((s,i)=>s+i.runs,0),w:sp.filter(s=>s.n===n).reduce((s,x)=>s+x.w,0),bat:inns.some(i=>i.n===n),bowl:sp.some(s=>s.n===n)}));
-      const tipOf=x=>`<b>${ml(x.n)} v ${esc(M2[x.n].opp)}</b> · ${M2[x.n].result}<br>${x.bat?x.runs+' runs':'did not bat'}${x.bowl?` · ${x.w} wkt${x.w===1?'':'s'}`:''}`;
+      const tipOf=x=>`<b>v ${esc(M2[x.n].opp)}</b> · ${dt(x.n)}${MODE==='all'?' '+M2[x.n].y:''} · ${M2[x.n].result}<br>${x.bat?x.runs+' runs':'did not bat'}${x.bowl?` · ${x.w} wkt${x.w===1?'':'s'}`:''}`;
       /* every season at once: too many matches for a label each, so slim bars grouped by season,
          a divider and the season's name under each group, and the detail in the tooltip */
       if(MODE==='all'){const W=560,H=230,padL=38,padR=8,x0=padL,x1=W-padR,y1=36,y0=H-34;
@@ -2929,7 +2936,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
           for(let k=0;k<Math.min(x.w,5);k++)el(sv,'circle',{cx,cy:y1-6-k*6,r:Math.min(2.6,slot*.32),fill:css('--s1')});
           bind(host,el(sv,'rect',{x:cx-slot/2,y:0,width:slot,height:y0,class:'hit'}),tipOf(x));});}
       else{
-      vcols(host,rows.map(x=>({lab:ml(x.n),lab2:code(M2[x.n].opp),val:x.bat?x.runs:null,top:x.bat?x.runs:'',color:won(x.n)?css('--win'):css('--loss'),tip:`<b>${ml(x.n)} v ${esc(M2[x.n].opp)}</b> · ${M2[x.n].result}<br>${x.bat?x.runs+' runs':'did not bat'}${x.bowl?` · ${x.w} wkt${x.w===1?'':'s'}`:''}`})),{H:200,max:Math.max(30,...rows.map(x=>x.runs))});
+      vcols(host,rows.map(x=>({lab:code(M2[x.n].opp),lab2:dt(x.n),val:x.bat?x.runs:null,top:x.bat?x.runs:'',color:won(x.n)?css('--win'):css('--loss'),tip:`<b>v ${esc(M2[x.n].opp)}</b> · ${dt(x.n)} · ${M2[x.n].result}<br>${x.bat?x.runs+' runs':'did not bat'}${x.bowl?` · ${x.w} wkt${x.w===1?'':'s'}`:''}`})),{H:200,max:Math.max(30,...rows.map(x=>x.runs))});
       const s=host.querySelector('svg');if(s&&rows.some(x=>x.bowl)){const W2=560,padL=38,padR=8,slot=(W2-padL-padR)/rows.length;rows.forEach((x,i)=>{for(let k=0;k<x.w;k++)el(s,'circle',{cx:padL+slot*(i+.5),cy:14+k*9,r:3.5,fill:css('--s1'),stroke:css('--surface'),'stroke-width':1});});}}}
     // shape + phase
     {const h=$('#pl-shape');if(balls(myB)<20){h.innerHTML='<div class="note">Fewer than 20 balls faced — not enough to show.</div>';}else{let html='';
@@ -2955,7 +2962,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
       h.innerHTML=html;}}
     // match by match
     {const rows=a.map(n=>{const i=inns.find(x=>x.n===n),s=sp.filter(x=>x.n===n);const k=order[n]?order[n].indexOf(p)+1:0;return {n,opp:M2[n].opp,res:M2[n].result,pos:k||null,runs:i?i.runs:null,balls:i?i.balls:null,sr:i&&i.balls?100*i.runs/i.balls:null,ov:s.length?s.reduce((x,y)=>x+y.overs,0):null,r:s.length?s.reduce((x,y)=>x+y.runs,0):null,w:s.length?s.reduce((x,y)=>x+y.w,0):null,wk:KP[n]===p,potm:M2[n].potm===p};});
-      table($('#pl-matches'),[{h:'Match',k:'n',f:x=>`${ml(x.n)} v ${esc(code(x.opp))}${x.potm?' <span class="pill" style="background:var(--gold-soft);color:var(--gold)">POTM</span>':''}${x.wk?' <span class="pill N">wk</span>':''}`},{h:'Result',k:'res',f:x=>`<span class="pill ${resClass(x.res)}">${x.res}</span>`},{h:'Batted at',k:'pos',r:1,f:x=>x.pos?ord(x.pos):'—'},{h:'Runs',k:'runs',r:1,f:x=>x.runs!=null?`<b>${x.runs}</b>`:'—'},{h:'Balls',k:'balls',r:1,f:x=>x.balls!=null?x.balls:'—'},{h:'SR',k:'sr',r:1,f:x=>x.sr!=null?x.sr.toFixed(0):'—'},{h:'Overs',k:'ov',r:1,f:x=>x.ov!=null?x.ov:'—'},{h:'Runs conc.',k:'r',r:1,f:x=>x.r!=null?x.r:'—'},{h:'Wkts',k:'w',r:1,f:x=>x.w!=null?`<b>${x.w}</b>`:'—'}],rows,{key:'n',asc:true});}
+      table($('#pl-matches'),[{h:'Match',k:'n',f:x=>`v ${esc(ml(x.n).replace(/ \([^)]*\)$/,''))} <span style="color:var(--muted)">${dt(x.n)}${MODE==='all'?' '+M2[x.n].y:''}</span>${x.potm?' <span class="pill" style="background:var(--gold-soft);color:var(--gold)">POTM</span>':''}${x.wk?' <span class="pill N">wk</span>':''}`},{h:'Result',k:'res',f:x=>`<span class="pill ${resClass(x.res)}">${x.res}</span>`},{h:'Batted at',k:'pos',r:1,f:x=>x.pos?ord(x.pos):'—'},{h:'Runs',k:'runs',r:1,f:x=>x.runs!=null?`<b>${x.runs}</b>`:'—'},{h:'Balls',k:'balls',r:1,f:x=>x.balls!=null?x.balls:'—'},{h:'SR',k:'sr',r:1,f:x=>x.sr!=null?x.sr.toFixed(0):'—'},{h:'Overs',k:'ov',r:1,f:x=>x.ov!=null?x.ov:'—'},{h:'Runs conc.',k:'r',r:1,f:x=>x.r!=null?x.r:'—'},{h:'Wkts',k:'w',r:1,f:x=>x.w!=null?`<b>${x.w}</b>`:'—'}],rows,{key:'n',asc:true});}
     // matchups
     /* the adjusted strike rate pulls a small sample towards the player's own rate: 24 balls of prior */
     {const mk=(src,keyF,host,isBat)=>{const g={};src.forEach(x=>(g[keyF(x)]=g[keyF(x)]||[]).push(x));const own=balls(src)?runsOf(src)/balls(src):0;const rows=Object.entries(g).filter(([,v])=>balls(v)>=6).map(([k,v])=>({k,r:runsOf(v),b:balls(v),sr:sr(v),adj:100*(runsOf(v)+24*own)/(balls(v)+24),o:v.filter(isBat?isW:bowlerW).length,ms:[...new Set(v.map(x=>x.n))].map(ml).join(', ')}));
