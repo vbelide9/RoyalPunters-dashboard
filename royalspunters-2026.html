@@ -2910,8 +2910,27 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     $('#pl-insights').innerHTML=ins.length?ins.map(x=>`<li class="pl"><span>${x}</span></li>`).join(''):'<li class="pl"><span>Not enough data for insights — fewer than two innings or spells.</span></li>';
     // form chart: runs bars + wickets dots per match
     {const host=$('#pl-form');host.innerHTML='';const rows=a.map(n=>({n,runs:inns.filter(i=>i.n===n).reduce((s,i)=>s+i.runs,0),w:sp.filter(s=>s.n===n).reduce((s,x)=>s+x.w,0),bat:inns.some(i=>i.n===n),bowl:sp.some(s=>s.n===n)}));
+      const tipOf=x=>`<b>${ml(x.n)} v ${esc(M2[x.n].opp)}</b> · ${M2[x.n].result}<br>${x.bat?x.runs+' runs':'did not bat'}${x.bowl?` · ${x.w} wkt${x.w===1?'':'s'}`:''}`;
+      /* every season at once: too many matches for a label each, so slim bars grouped by season,
+         a divider and the season's name under each group, and the detail in the tooltip */
+      if(MODE==='all'){const W=560,H=230,padL=38,padR=8,x0=padL,x1=W-padR,y1=36,y0=H-34;
+        const ticks=niceTicks(Math.max(30,...rows.map(x=>x.runs)),4),max=ticks[ticks.length-1];
+        const sv=svgEl(host,W,H),g=el(sv,'g',{class:'grid'});
+        ticks.forEach(v=>{const y=y0-(y0-y1)*v/max;el(g,'line',{x1:x0,x2:x1,y1:y,y2:y});el(sv,'text',{x:x0-6,y:y+4,'text-anchor':'end',class:'num mut'},v);});
+        const slot=(x1-x0)/Math.max(1,rows.length),bw=Math.max(2,Math.min(14,slot*.7));
+        let st=0;rows.forEach((x,i)=>{const yr=M2[x.n].y;if(i<rows.length-1&&M2[rows[i+1].n].y===yr)return;
+          const a=x0+slot*st,b=x0+slot*(i+1);
+          el(sv,'text',{x:(a+b)/2,y:y0+15,'text-anchor':'middle',class:'lbl',style:'font-size:11px'},yr);
+          el(sv,'text',{x:(a+b)/2,y:y0+27,'text-anchor':'middle',class:'mut',style:'font-size:10px'},`${i-st+1} match${i-st?'es':''}`);
+          if(i<rows.length-1)el(sv,'line',{x1:b,x2:b,y1:4,y2:y0+28,stroke:css('--line'),'stroke-dasharray':'3 3'});st=i+1;});
+        el(sv,'line',{x1:x0,x2:x1,y1:y0,y2:y0,stroke:css('--line')});
+        rows.forEach((x,i)=>{const cx=x0+slot*(i+.5),col=won(x.n)?css('--win'):css('--loss');
+          if(x.bat){const h=Math.max(1.5,(y0-y1)*x.runs/max);el(sv,'rect',{x:cx-bw/2,y:y0-h,width:bw,height:h,rx:Math.min(2,bw/3),fill:col});}
+          for(let k=0;k<Math.min(x.w,5);k++)el(sv,'circle',{cx,cy:y1-6-k*6,r:Math.min(2.6,slot*.32),fill:css('--s1')});
+          bind(host,el(sv,'rect',{x:cx-slot/2,y:0,width:slot,height:y0,class:'hit'}),tipOf(x));});}
+      else{
       vcols(host,rows.map(x=>({lab:ml(x.n),lab2:code(M2[x.n].opp),val:x.bat?x.runs:null,top:x.bat?x.runs:'',color:won(x.n)?css('--win'):css('--loss'),tip:`<b>${ml(x.n)} v ${esc(M2[x.n].opp)}</b> · ${M2[x.n].result}<br>${x.bat?x.runs+' runs':'did not bat'}${x.bowl?` · ${x.w} wkt${x.w===1?'':'s'}`:''}`})),{H:200,max:Math.max(30,...rows.map(x=>x.runs))});
-      const s=host.querySelector('svg');if(s&&rows.some(x=>x.bowl)){const W2=560,padL=38,padR=8,slot=(W2-padL-padR)/rows.length;rows.forEach((x,i)=>{for(let k=0;k<x.w;k++)el(s,'circle',{cx:padL+slot*(i+.5),cy:14+k*9,r:3.5,fill:css('--s1'),stroke:css('--surface'),'stroke-width':1});});}}
+      const s=host.querySelector('svg');if(s&&rows.some(x=>x.bowl)){const W2=560,padL=38,padR=8,slot=(W2-padL-padR)/rows.length;rows.forEach((x,i)=>{for(let k=0;k<x.w;k++)el(s,'circle',{cx:padL+slot*(i+.5),cy:14+k*9,r:3.5,fill:css('--s1'),stroke:css('--surface'),'stroke-width':1});});}}}
     // shape + phase
     {const h=$('#pl-shape');if(balls(myB)<20){h.innerHTML='<div class="note">Fewer than 20 balls faced — not enough to show.</div>';}else{let html='';
       if(balls(myB)>=20){const s1=myB.filter(x=>x.runs===1).length,s2=myB.filter(x=>x.runs===2||x.runs===3).reduce((s,x)=>s+x.runs,0),f4=myB.filter(x=>x.runs===4).length*4,s6=myB.filter(x=>x.runs===6).length*6,tot=s1+s2+f4+s6||1;html+=`<div class="legend"><span><i style="background:var(--ramp-2)"></i>Singles ${s1}</span><span><i style="background:var(--ramp-3)"></i>2s &amp; 3s ${s2}</span><span><i style="background:var(--ramp-4)"></i>Fours ${f4}</span><span><i style="background:var(--ramp-5)"></i>Sixes ${s6}</span></div><div class="meter" style="height:14px;margin-bottom:12px"><i style="width:${100*s1/tot}%;background:var(--ramp-2)"></i><i style="width:${100*s2/tot}%;background:var(--ramp-3)"></i><i style="width:${100*f4/tot}%;background:var(--ramp-4)"></i><i style="width:${100*s6/tot}%;background:var(--ramp-5)"></i></div>`;
@@ -2957,6 +2976,7 @@ document.querySelectorAll('.card:not(.span)').forEach(card=>{const tb=card.query
     $('#p-player .tabdesc').textContent=MODE==='all'?`One player's whole RoyalsPunters record, ${YEARS[0]}–${YEARS[YEARS.length-1]} — key insights, form, every match and their matchups. Pick a name.`:`One player's season — key insights, form, every match and their matchups. Pick a name.`;
     setSub('#pl-insights',`What ${SPAN==='the season'?"the season's":SPAN+"'"} data says about this player.`);
     $('#pl-form').closest('.card').querySelector('h2').textContent=MODE==='all'?'Form across the seasons':'Form through the season';
+    setSub('#pl-form',MODE==='all'?'Runs (bars) and wickets (dots) in every match, grouped by season; green is a win, red a loss. Hover a bar for the match.':'Runs (bars) and wickets (dots) in each match played; green frame is a win.');
     ['#pl-mu-bat','#pl-mu-bowl'].forEach(id=>{const sub=$(id).closest('.card').querySelector('.sub');if(sub.dataset.orig==null)sub.dataset.orig=sub.innerHTML;
       sub.innerHTML=MODE==='all'?sub.dataset.orig.replace(/own season strike rate/g,'own career strike rate').replace(/ The Advanced tab has the career version with ranges\./,''):sub.dataset.orig;});
   };
